@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import threading
 import time
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -79,7 +80,7 @@ class JointCfg:
 def load_cfg(hw_yaml: str | None = None) -> dict:
     hw_path = _resolve_hw_cfg_path(hw_yaml)
 
-    with open(hw_path, "r") as f:
+    with open(hw_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     joints = []
@@ -485,7 +486,9 @@ class RebotArm:
         self._connected = True
 
     def _make_controller(self, vendor: str) -> Controller:
-        if str(Path(self._channel).resolve()).startswith("/dev/tty"):
+        windows_port = self._channel.removeprefix("\\\\.\\")
+        if (str(Path(self._channel).resolve()).startswith("/dev/tty")
+                or re.fullmatch(r"COM[1-9][0-9]*", windows_port, re.IGNORECASE)):
             return Controller.from_dm_serial(self._channel, 921600)
         return Controller(self._channel)
 

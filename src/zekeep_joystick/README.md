@@ -49,16 +49,17 @@ source install/setup.bash
 
 ```bash
 cd "$ZKEEP_WS"
-source tools/activate_ros.sh
+source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
 ros2 launch zekeep_bringup driver.launch.py channel:=/dev/ttyACM0
 ```
 
-关节控制不需要 MoveIt。终端 2 手动使能并启动：
+关节伺服本身不依赖 MoveIt，但驱动安全回零和已使能后的正常退出需要 MoveIt。
+先按下方 MoveIt 命令在额外终端启动硬件规划栈，再在终端 2 手动使能并启动：
 
 ```bash
 cd "$ZKEEP_WS"
-source tools/activate_ros.sh
+source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
 ros2 service call /zekeep/enable std_srvs/srv/Trigger '{}'
 ros2 launch zekeep_joystick joystick.launch.py
@@ -68,7 +69,7 @@ ros2 launch zekeep_joystick joystick.launch.py
 
 ```bash
 cd "$ZKEEP_WS"
-source tools/activate_ros.sh
+source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
 ros2 launch zekeep_moveit_config hardware.launch.py arm_namespace:=zekeep use_rviz:=false
 ```
@@ -77,7 +78,7 @@ ros2 launch zekeep_moveit_config hardware.launch.py arm_namespace:=zekeep use_rv
 
 ```bash
 cd "$ZKEEP_WS"
-source tools/activate_ros.sh
+source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
 ros2 service call /zekeep/enable std_srvs/srv/Trigger '{}'
 ros2 launch zekeep_joystick cartesian_joystick.launch.py
@@ -108,3 +109,10 @@ ros2 topic echo /joy
 ```
 
 真机前先悬空或降低 `max_speeds`，逐轴确认方向。手柄断连或 `/joy` 超过 0.3 秒无更新时，节点请求保持；驱动自身还有 0.2 秒伺服看门狗。
+
+## π0.5 示范采集
+
+使用工作区根目录 `./tools/pi05.sh`。主臂采集用 `record-leader`，
+已有 ROS 手柄控制的只读采集用 `record`；两种方式不能同时占用同一从臂。
+安装与权重下载见 [安装说明](../../docs/PI05_INSTALL.md)，
+操作步骤见 [完整流程](../zekeep_embodied/docs/pi05-entry.md)。

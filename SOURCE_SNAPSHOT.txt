@@ -7,3 +7,35 @@ Git history: intentionally omitted
 Scope: ROS, MoveIt, teaching, joystick, teleoperation, camera/calibration/detection/grasping
 Excluded: language-control and embodied-learning modules, model weights, logs, caches and build outputs
 Publication: based on existing leo66600/Zekeeparm history; excludes device identity records, calibration backups, and GraspNet source copies
+
+Web synchronization: 2026-10-10T08:36:30.996842
+Web source: /home/zekeep/Zekeeparm_ws/src/zekeep_bringup/web and supporting ROS packages
+Excluded from web sync: MuJoCo, embodied learning, SDK replacement, calibration and taught placement targets
+Backup: /home/zekeep/Desktop/Zekeeparm_web_backup_20261010_083630
+Joint3 lower limit synchronized: -0.01 rad across hardware, models, MoveIt, perception, teaching, AI and web
+Verification: 7 ROS packages built; 79 pytest checks, 12 Node checks, 2 vision unittest checks passed; legacy launch and installer checks passed
+Runtime validation: HTTP assets, model API, local proxy, J3 boundaries and launch expansion checked without hardware; browser and physical motion not tested
+Local environment: desktop .venv-ros symlinks to /home/zekeep/Zekeeparm_ws/.venv-ros; desktop SDK imports, model paths, Pinocchio 3.9.0 and ROS/web interfaces verified without hardware connection; LLM key must be provided in backend environment
+
+Vision directory renamed: src/zekeep_grasp; desktop references and SDK URDF path migrated; Conda name rebotarm preserved
+Rename backup: /home/zekeep/Desktop/Zekeeparm_grasp_rename_backup_20261010_084503
+Rename verification: 7 ROS packages built; 80 pytest, 12 Node and 2 vision unittest checks passed; shared SDK/model imports and CLI help passed; calibration fingerprint and binary assets unchanged
+
+Calibration identity migration: existing record matched exactly after restoring only joint3 lower bound in configuration and URDF; updated fingerprint for authorized -0.01 rad limit; hand_eye.npz and intrinsics.npz unchanged; original identity backed up under src/zekeep_grasp/config/calibration/backups/identity-before-j3-sync-20261010-090129.json
+
+Web launcher renamed: tools/start_web_sim.sh; shell content and hardware/vision startup behavior unchanged
+
+2026-10-10 web diagnostics fix: gripper position commands restore original configured MIT gains after free mode; read-only scene queries retain raw 2D YOLO observations while grasp targets still require valid depth, calibration and stationary capture. Verification: 6 controller pytest checks and 37 vision/VLM unittest checks passed; 4 ROS packages built. Current live processes were not restarted; physical motion and gripper opening were not tested.
+
+2026-10-10 color routing and recognition fix: restored source-confirmed red_place/blue_place/green_place mappings and SRDF states from ready_3poses_20261009_095828.json; default placement retained. New identity exactly matched the source verified installation before image-only YOLO configuration changes; original identity backed up, hand_eye.npz/intrinsics.npz unchanged. Shared YOLO parsing confirms/corrects block colors from HSV mask-interior majority (0.60), rejects unconfirmed colored labels and merges corrected duplicate boxes. Web RGB-D capture now uses the existing 3 retries while retaining the 0.25 s and stationarity gates. Verification: 36 focused tests passed; 3 ROS packages built; 60 live read-only RGB-D frames acquired without failure; recorded RGB-D sample reproduced purple-label/red-object confusion at confidence 0.579, then correctly identified red/blue/purple blocks after the fix. No motor actions or real grasp/placement executed.
+
+2026-10-22 VLA portable synchronization:
+Source: /home/zekeep/Zekeeparm_ws/src/zekeep_embodied and tools/pi05.sh
+Scope: collection, dataset export/statistics, NF4 QLoRA training, prediction, local policy service, shadow, supervised execution and RViz replay; Jev and Studio changes excluded
+Portable changes: target zekeep_grasp paths, Miniforge/explicit interpreter selection, local package source isolation; target hardware calibration and fixed gripper center protection preserved
+Rebuild: docs/PI05_INSTALL.md pins OpenPI 215abfb217dbac7d5f1273282331b9b1866c0479 and preserves conversion patch; includes official weights/tokenizer download, cu128 dependencies and Transformers replacements
+Excluded: downloaded OpenPI, virtual environments, weights, demonstrations, checkpoints, caches and local credentials
+Verification: 5 entry tests, 19 ROS safety/preview tests and 3 model prediction tests passed; 8-frame dual-camera simulation and dataset validation passed; patch reverse-check, shell/Python syntax and relative guide links checked
+Limitations: reused source computer environments for tests; clean-computer dependency/weight installation, real training, cameras and hardware motion not tested
+Backup: /home/zekeep/Desktop/Zekeeparm_vla_backup_20261022_165132
+VLA checksum manifest: docs/VLA_SOURCE_SHA256SUMS (root MANIFEST.sha256 is an older snapshot)

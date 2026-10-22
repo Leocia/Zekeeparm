@@ -73,8 +73,8 @@ def plan_joint_space_trajectory(
     if ik_params is None:
         ik_params = IKParams()
 
-    T_start = start_pose if start_pose is not None else compute_fk(model, q_start)[2]
-    T_end = end_pose if end_pose is not None else compute_fk(model, q_end)[2]
+    T_start = start_pose if start_pose is not None else compute_fk(model, q_start, model.frames[end_frame_id].name)[2]
+    T_end = end_pose if end_pose is not None else compute_fk(model, q_end, model.frames[end_frame_id].name)[2]
 
     cart_result = plan_cartesian_geodesic_trajectory(T_start, T_end, duration, params)
     return track_trajectory(
@@ -120,7 +120,7 @@ def compute_traj_stats(
             break
         if pt.ik_success:
             stats.success_count += 1
-        _, _, oMf_h = compute_fk(model, pt.q)
+        _, _, oMf_h = compute_fk(model, pt.q, model.frames[end_frame_id].name)
         err_vec = pin.log6(pin.SE3(oMf_h).inverse() * ref_pts[i].pose).vector
         err_norm = float(np.linalg.norm(err_vec))
         stats.max_ik_error = max(stats.max_ik_error, err_norm)

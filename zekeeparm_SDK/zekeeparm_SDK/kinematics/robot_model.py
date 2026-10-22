@@ -26,7 +26,7 @@ def _hw_config() -> dict:
     if not hw_path.exists():
         raise FileNotFoundError(f"Hardware config not found: {hw_path}")
 
-    _hw_cfg_cache = yaml.safe_load(hw_path.read_text()) or {}
+    _hw_cfg_cache = yaml.safe_load(hw_path.read_text(encoding="utf-8")) or {}
     return _hw_cfg_cache
 
 

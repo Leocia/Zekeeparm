@@ -1,0 +1,11 @@
+# Use in embodied only. Orbbec remains in the existing rebotarm environment.
+lerobot==0.4.4
+lerobot-robot-seeed-b601==1.0.0
+motorbridge==0.4.9
+torch==2.6.0
+torchvision==0.21.0
+torchcodec==0.2.1
+numpy==2.2.6
+av==15.1.0
+opencv-python-headless==4.12.0.88
+PyYAML==6.0.3

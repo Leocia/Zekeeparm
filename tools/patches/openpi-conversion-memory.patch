@@ -1,0 +1,42 @@
+diff --git a/examples/convert_jax_model_to_pytorch.py b/examples/convert_jax_model_to_pytorch.py
+index 632c0b8..975b49b 100644
+--- a/examples/convert_jax_model_to_pytorch.py
++++ b/examples/convert_jax_model_to_pytorch.py
+@@ -434,8 +434,9 @@ def convert_pi0_checkpoint(
+     print(f"Converting PI0 checkpoint from {checkpoint_dir} to {output_path}")
+     print(f"Model config: {model_config}")
+ 
+-    # Break down orbax ckpts by restoring via JAX to respect dtype
+-    initial_params = slice_initial_orbax_checkpoint(checkpoint_dir=checkpoint_dir, restore_precision="float32")
++    # Restore at half precision to avoid holding a full float32 checkpoint in RAM.
++    restore_precision = "float16" if precision == "bfloat16" else precision
++    initial_params = slice_initial_orbax_checkpoint(checkpoint_dir=checkpoint_dir, restore_precision=restore_precision)
+ 
+     # Process projection params
+     if model_config.pi05:
+@@ -510,8 +511,9 @@ def convert_pi0_checkpoint(
+         expert_params, action_expert_config, num_expert=1, checkpoint_dir=checkpoint_dir, pi05=model_config.pi05
+     )
+ 
+-    # Instantiate model
+-    pi0_model = openpi.models_pytorch.pi0_pytorch.PI0Pytorch(model_config)
++    # Instantiate in the output dtype so loading does not allocate a second full model.
++    torch_dtype = {"float32": torch.float32, "bfloat16": torch.bfloat16, "float16": torch.float16}[precision]
++    pi0_model = openpi.models_pytorch.pi0_pytorch.PI0Pytorch(model_config).to(torch_dtype)
+ 
+     # Combine all parameters (no prefix needed for our model structure)
+     all_params = {**paligemma_params, **gemma_params, **projection_params}
+@@ -519,13 +521,6 @@ def convert_pi0_checkpoint(
+     # Load state dict
+     pi0_model.load_state_dict(all_params, strict=False)
+ 
+-    if precision == "float32":
+-        pi0_model = pi0_model.to(torch.float32)
+-    elif precision == "bfloat16":
+-        pi0_model = pi0_model.to(torch.bfloat16)
+-    else:
+-        raise ValueError(f"Invalid precision: {precision}")
+-
+     # Save the converted model using safetensors
+     os.makedirs(output_path, exist_ok=True)
+ 

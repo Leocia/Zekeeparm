@@ -65,7 +65,7 @@ def _apply_profile(t: float, profile: TrajProfile, accel_ratio: float) -> float:
         return 10.0 * t3 - 15.0 * t4 + 6.0 * t5
     if profile == TrajProfile.TRAPEZOID:
         ta = max(0.01, min(0.49, accel_ratio))
-        vm = 2.0 / (1.0 - ta)
+        vm = 1.0 / (1.0 - ta)
         if t <= ta:
             return 0.5 * vm / ta * t * t
         if t <= 1.0 - ta:

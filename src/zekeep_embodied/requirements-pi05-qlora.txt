@@ -1,0 +1,2 @@
+# Install into third_party/openpi/.venv after the pinned openpi environment exists.
+bitsandbytes==0.50.2

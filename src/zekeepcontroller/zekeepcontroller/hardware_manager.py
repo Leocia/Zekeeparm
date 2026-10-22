@@ -143,6 +143,9 @@ class HardwareManager:
         if self._gravity_feedforward_mask.shape != (len(self._arm_group.joint_names),):
             raise ValueError("gravity feedforward mask does not match arm joints")
         self._gripper_group = self._robot.groups.get("gripper")
+        if self._gripper_group is not None:
+            self._gripper_mit_kp = self._gripper_group._mit_kp.copy()
+            self._gripper_mit_kd = self._gripper_group._mit_kd.copy()
         self._joint_mapping = joint_mapping_from_config(
             hardware_data,
             self._arm_group.joint_names,
@@ -945,6 +948,18 @@ class HardwareManager:
                 codes.append(0)
         return codes
 
+    def get_motor_feedback_errors(self) -> list[str]:
+        errors = []
+        for joint in self._robot._all_joints:
+            state = self._robot._motor_map[joint.name].get_state()
+            # Damiao reports DISABLED=0 and ENABLED=1; neither is a fault.
+            valid_codes = (0, 1) if joint.vendor == "damiao" else (0,)
+            if state is None:
+                errors.append(f"{joint.name}: no feedback")
+            elif int(state.status_code) not in valid_codes:
+                errors.append(f"{joint.name}: status=0x{int(state.status_code):02X}")
+        return errors
+
     # ------------------------------------------------------------------
     # gravity compensation
     # ------------------------------------------------------------------
@@ -1300,6 +1315,9 @@ class HardwareManager:
         target = float(position)
         self._gripper_mapping.validate_positions([target])
         self._gripper_grasp_state = None
+        # Free MIT mode clears these gains; recover the configured position gains.
+        self._gripper_group._mit_kp = self._gripper_mit_kp.copy()
+        self._gripper_group._mit_kd = self._gripper_mit_kd.copy()
         self._endpos_ctrl.set_gripper_target(target)
         self._gripper_group.send_mit(
             self._gripper_mapping.positions_to_motor([target]),
@@ -1473,11 +1491,7 @@ class HardwareManager:
         missing: list[str] = []
         while True:
             self._robot_get_state(request_feedback=True)
-            missing = []
-            for name in self._robot.joint_names:
-                state = self._robot._motor_map[name].get_state()
-                if state is None or int(state.status_code) != 0:
-                    missing.append(name)
+            missing = self.get_motor_feedback_errors()
             if not missing or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
