@@ -25,9 +25,7 @@
 | 先看机械臂模型，不连接硬件 | [基础安装](#一键安装)，再看 [ROS 运行](#运行入口) | `bash tools/env.sh ros ros2 launch zekeep_moveit_config demo.launch.py` |
 | 真机控制、手柄或拖动示教 | [基础安装](#一键安装)、[标定边界](#标定边界)、[手柄](src/zekeep_joystick/README.md)或[示教](src/zekeep_teach/README.md) | `bash tools/env.sh ros` |
 | RGB-D 视觉与 GraspNet 抓取 | [GPU 准备](#nvidia-驱动和-cuda-128)、基础安装时选择 GraspNet、[标定](#标定边界) | `bash tools/env.sh vision` |
-| 主从臂遥操作 | [基础安装](#一键安装)，再按[主从臂说明](src/zekeep_teleop/README.md)核对串口与零位 | `bash tools/env.sh teleop` |
-| 只采集 VLA 示范 | 基础安装，再完成 [VLA 第 1 步](#1-采集与数据处理依赖)，无需下载 π0.5 权重 | `bash tools/env.sh vla ./tools/pi05.sh help` |
-| VLA 训练、预测或影子检查 | [VLA 完整选装](#π05-vla-入口)，再按[采集与训练流程](src/zekeep_embodied/docs/pi05-entry.md)准备数据 | `bash tools/env.sh vla`，直接操作模型 Python 用 `bash tools/env.sh model` |
+
 
 从项目根目录执行上表命令；省略命令会进入子终端，输入 `exit` 返回。
 真机控制和主从遥操作须按对应说明检查现场；选环境本身不连接设备或使能电机。
