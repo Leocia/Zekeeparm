@@ -126,7 +126,7 @@ nvcc --version
 bash tools/env.sh base bash setup.sh
 ```
 
-该脚本安装基础功能，并在结束前检查关键导入；VLA、Studio 不在安装范围内：
+该脚本安装基础功能，并在结束前检查关键导入
 
 | 内容 | 安装行为 |
 | --- | --- |
@@ -222,40 +222,6 @@ sudo sh "$orbbec_rules_installer"
 脚本会写入 `/etc/udev/rules.d/` 并重载规则；执行后拔插相机。
 如果 SDK 已能正常访问相机，无需重复配置。此步骤不连接或控制机械臂。
 
-## 下载资源清单
-
-| 资源 | 获取方式 | 安装后位置 |
-| --- | --- | --- |
-| ROS、系统依赖 | `setup.sh` 使用 Ubuntu/ROS apt 源 | `/opt/ros/humble` 与系统目录 |
-| Miniforge、Python 依赖 | `setup.sh` 从 Miniforge、Conda/PyPI/PyTorch 源获取 | 上述环境目录 |
-| YOLOE | `setup.sh` 下载 `yoloe-26l-seg.pt` | `src/zekeep_grasp/models/` |
-| MobileCLIP2 | `setup.sh` 下载 `mobileclip2_b.ts` | `src/zekeep_grasp/` |
-| GraspNet 源码、API、权重 | 接受许可后由 `setup.sh` 下载 | `third_party/graspnet-baseline/` |
-| OpenPI 及模型依赖 | 下方 VLA 手动选装步骤 | `third_party/openpi/` |
-| π0.5 官方 JAX 基座 | VLA 官方下载器 | `~/.cache/openpi/openpi-assets/checkpoints/pi05_base/` |
-| π0.5 tokenizer | VLA 官方下载器 | `~/.cache/openpi/big_vision/paligemma_tokenizer.model` |
-| π0.5 PyTorch 基座 | 在新电脑转换 JAX 基座 | `~/.cache/openpi/openpi-assets/checkpoints/pi05_base_pytorch/` |
-| Studio Blockly 资源 | Studio 中执行 `npm ci` | `apps/studio` 的静态资源目录 |
-| 本机任务适配器、统计和示范 | 自行采集、导出和训练，不由基础下载生成 | `data/` |
-
-YOLOE、MobileCLIP2 和 GraspNet 的来源 URL/校验值以 [setup.sh](setup.sh) 为准，
-校验清单见 [MODEL_SHA256SUMS](docs/MODEL_SHA256SUMS)。接受并安装全部视觉模型后，可运行：
-
-```bash
-cd "$ZKEEP_WS"
-sha256sum -c docs/MODEL_SHA256SUMS
-```
-
-跳过 GraspNet 时，完整清单会因缺少该权重而失败，应只核对前两项：
-
-```bash
-cd "$ZKEEP_WS"
-head -n 2 docs/MODEL_SHA256SUMS | sha256sum -c -
-```
-
-原始 π0.5 JAX 基座约 11.6 GiB，源电脑 OpenPI 环境约 9.2 GiB；
-转换后的 PyTorch 基座、下载缓存、PNG 示范和训练产物另占空间。
-源码同步很小，不代表完整安装也小。RAM/显存与磁盘占用不同，跨电脑的转换/训练峰值尚未验证。
 
 ## π0.5 VLA 入口
 
