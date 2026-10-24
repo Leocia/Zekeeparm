@@ -10,7 +10,7 @@ usage() {
     cat <<'HELP'
 用法：./tools/pi05.sh <子命令> [参数]
 
-  doctor                         检查环境、基础权重和 GPU；不连接设备
+  doctor                         检查采集依赖和配置；不要求模型、权重或 GPU
   driver [ROS launch 参数]       启动真机驱动，默认不使能电机
   joystick [ROS launch 参数]     启动关节手柄控制；电机须现场手动使能
   joy [ROS 参数]                仅发布 /joy，供策略执行读取 deadman
@@ -19,6 +19,11 @@ usage() {
   record-leader --output RAW_DIR  主臂遥操并录制示范；会连接并使能从臂
   check-raw EPISODE_DIR          检查一条原始示范
   preview-raw EPISODE_DIR --output VIDEO.mp4
+  audit RAW_DIR --output REPORT.json
+  bundle --train TRAIN_DIR --validation VAL_DIR --output DATA.tar
+  verify DATA.tar               校验数据包，不解压
+
+  # 以下为可选模型流程，数据采集不需要执行。
   export RAW_DIR --repo-id local/新数据集 [--fps 9]
   check --repo-id local/新数据集
   stats --repo-id local/新数据集
@@ -34,7 +39,8 @@ usage() {
 execute 保留交互 MOVE 确认和按住 deadman 才运动的保护，不自动使能电机。
 record-leader 直接占用主从臂串口，勿同时启动 ROS 驱动；退出会释放从臂力矩。
 离线 predict 文件用于检查动作数值；replay 只接受 shadow --save-preview 文件。
-详细步骤：src/zekeep_embodied/docs/pi05-entry.md
+数据采集与云端交付：README.md、src/zekeep_embodied/docs/cloud-data.md
+可选模型步骤：src/zekeep_embodied/docs/pi05-entry.md
 HELP
 }
 
@@ -58,26 +64,10 @@ export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$workspace_dir/data/openpi/cache/
 case "$command" in
     help|-h|--help) usage ;;
     doctor)
-        status=0
-        for path in \
-            "${EMBODIED_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/embodied/bin/python}" \
-            "${ZKEEP_VISION_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/rebotarm/bin/python}" \
-            "$workspace_dir/third_party/openpi/.venv/bin/python" \
-            "$workspace_dir/.venv-ros/bin/python" \
-            /opt/ros/humble/setup.bash "$workspace_dir/install/setup.bash" \
-            "$HOME/.cache/openpi/openpi-assets/checkpoints/pi05_base_pytorch/model.safetensors"; do
-            if [[ -f "$path" ]]; then
-                printf 'OK %s\n' "$path"
-            else
-                printf '缺少 %s\n' "$path" >&2
-                status=1
-            fi
-        done
-        if ! nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv,noheader; then
-            status=1
-        fi
-        printf '模型命令必须显式选择数据集和实验；doctor 不验证数据或模型效果。\n'
-        exit "$status"
+        exec bash "$package_dir/tools/run.sh" -m zekeep_embodied.bundle doctor --config "$config" "$@"
+        ;;
+    audit|bundle|verify)
+        exec bash "$package_dir/tools/run.sh" -m zekeep_embodied.bundle "$command" "$@"
         ;;
     driver|joystick|joy|rviz)
         case "$command" in

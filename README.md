@@ -1,6 +1,6 @@
 # Zekeeparm
 
-六轴机械臂运行包，支持 ROS 真机控制、MoveIt、视觉抓取、拖动示教和主从遥操作，另提供可选的 Studio 积木编程与 π0.5 VLA。
+六轴机械臂运行包，支持 ROS 真机控制、MoveIt、视觉抓取、拖动示教和主从遥操作，另提供可选的 Studio 积木编程和面向云端训练的示范数据采集。
 
 **目标平台：** Ubuntu 22.04 x86_64 · ROS 2 Humble
 
@@ -19,7 +19,7 @@
 | `zekeep_grasp` | 相机、标定、检测与 SDK 抓取 |
 | `zekeep_teleop` | LeRobot 主从遥操作 |
 | `zekeeparm_SDK` | 底层 SDK，DM 硬件配置 |
-| `zekeep_embodied`（选装） | π0.5 数据采集、训练与监督执行 |
+| `zekeep_embodied`（选装） | 双相机示范采集、数据检查与云端训练数据打包 |
 | `apps/studio`（选装） | 独立积木编程工作台 |
 
 ## 一键安装
@@ -161,7 +161,60 @@ SDK 抓取会连接机械臂并执行准备位运动；主从遥操作和 `recor
 
 **VLA 独立选装，不随 `setup.sh` 安装。**
 
-- **π0.5 VLA：** [依赖与权重安装](docs/PI05_INSTALL.md) · [采集、训练与执行](src/zekeep_embodied/docs/pi05-entry.md)。需自行准备任务数据；8 GB 显存 NF4 QLoRA 为实验实现，不保证任务效果。执行器保留 `MOVE` 确认与 deadman，但没有环境碰撞或自碰撞检查。
+### 示范数据采集与云端交付
+
+本地负责双相机采集、示范检查和数据打包，训练放在云端。**数据采集不需要下载 π0.5 权重，不需要 OpenPI 模型环境或 GPU 推理。**
+现有模型训练与执行功能仍为独立选项，不是采集的前置步骤。
+
+先完成基础安装，核对相机、串口和机械臂标定。采集环境使用 Python 3.10，Orbbec SDK 保留在独立的 `rebotarm` 环境中。
+已安装 Conda 时，在项目根目录执行；已有 `embodied` 环境可跳过创建：
+
+```bash
+export ZKEEP_MINIFORGE_DIR="$(conda info --base)"
+"$ZKEEP_MINIFORGE_DIR/bin/conda" create -n embodied python=3.10 -y
+bash tools/env.sh vla bash src/zekeep_embodied/tools/run.sh -m pip install \
+  -r src/zekeep_embodied/requirements-embodied.txt \
+  -e src/zekeep_teleop -e src/zekeep_embodied
+bash tools/env.sh vla bash src/zekeep_embodied/tools/run.sh -m pip check
+```
+
+使用默认 `~/miniforge3` 时可直接设置 `ZKEEP_MINIFORGE_DIR="$HOME/miniforge3"`。
+自定义 Conda 路径时，后续终端也须保留该变量；采集与相机解释器分别可用 `EMBODIED_PYTHON`、`ZKEEP_VISION_PYTHON` 覆盖。
+核对 `src/zekeep_embodied/configs/record.yaml` 中的相机设备、任务和 `installation_id`。相机布局变化后更新安装标识，重新预检。
+
+```bash
+./tools/pi05.sh doctor
+./tools/pi05.sh camera-check --seconds 10
+```
+
+`doctor` 只检查采集依赖和配置路径，不检查权重、GPU 或真实硬件；`camera-check` 只打开相机，检查保存的两路图片及帧率。
+默认使用 Orbbec 腕部相机和 C100 全局相机，以主机接收时间对齐，不是硬件同步。
+
+采集方式二选一：
+
+- **主从臂：** 停止占用从臂的 ROS 驱动和其他控制程序，按[采集步骤](src/zekeep_embodied/docs/pi05-entry.md#主臂遥操采集)核对启动姿态后，运行 `./tools/pi05.sh record-leader --output "$PWD/data/pi05_red_cube_v1/raw"`。启动会使能从臂并立即跟随；退出会释放力矩，须先扶稳机械臂。
+- **ROS 手柄：** 按[手柄采集步骤](src/zekeep_embodied/docs/pi05-entry.md#游戏手柄采集)分别启动唯一的驱动和手柄控制，现场手动使能并确认控制正常，再运行 `./tools/pi05.sh record --output "$PWD/data/pi05_red_cube_v1/raw"`。录制器只读状态与动作，不使能电机或发布运动命令。
+
+输入按键后按回车：`s` 开始、`p` 成功保存、`w` 失败保存、`d` 放弃、`e` 退出。
+先录少量示范，检查完整动作和双相机画面，再批量采集：
+
+```bash
+./tools/pi05.sh check-raw data/pi05_red_cube_v1/raw/episode_实际名称
+./tools/pi05.sh preview-raw data/pi05_red_cube_v1/raw/episode_实际名称 \
+  --output data/pi05_red_cube_v1/review.mp4
+./tools/pi05.sh audit data/pi05_red_cube_v1/raw \
+  --output data/pi05_red_cube_v1/audit.json
+```
+
+按完整 episode 人工划分训练集和验证集，再打包上传；不要拆帧或把同一示范放进两边。
+完整命令见[数据打包与云端交付](src/zekeep_embodied/docs/cloud-data.md)。
+`bundle` 将符号链接展开为真实文件，并生成 SHA-256 清单；云端用 `verify` 校验后再解压，不需要连接硬件。
+质检标出失败、模拟、未完成及损坏的数据；打包拒绝包含这些示范，输出文件拒绝覆盖。质检通过仍需人工回看。
+
+原始数据保存图像、状态、动作和时间戳；动作是 7 维电机坐标绝对目标，单位度，不能重复应用主从方向映射。
+`data/` 不随 Git 上传或迁移，需单独备份并预留磁盘空间。采集入口没有环境碰撞或自碰撞检查，首次须现场监督。
+云端模型环境及权重仅在训练或部署时准备，见[可选模型安装说明](docs/PI05_INSTALL.md#3-openpi-源码和模型依赖)。
+
 ## 标定边界
 
 随包标定来自原设备，不能直接视为新设备已验证。设备、安装位置或场景变化后必须重新标定。

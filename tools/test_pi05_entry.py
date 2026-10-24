@@ -117,6 +117,22 @@ class Pi05EntryTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 2)
                 self.assertNotIn('"args"', result.stdout)
 
+    def test_data_commands_use_capture_runner_without_model_environment(self):
+        for command, args in (
+            ("doctor", []),
+            ("audit", ["raw recordings", "--output", "audit.json"]),
+            ("bundle", ["--train", "train set", "--validation", "validation set",
+                        "--output", "delivery.tar"]),
+            ("verify", ["delivery.tar"]),
+        ):
+            with self.subTest(command=command):
+                result = self.run_entry(command, *args)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                expected = ["run.sh", "-m", "zekeep_embodied.bundle", command]
+                if command == "doctor":
+                    expected += ["--config", str(self.root / "src/zekeep_embodied/configs/record.yaml")]
+                self.assertEqual(json.loads(result.stdout)["args"], expected + args)
+
     def test_capture_export_and_display_routes(self):
         for command, args, runner, module, action in (
             ("record", ["--output", "new recordings"], "run_ros.sh", "record", "--joystick"),

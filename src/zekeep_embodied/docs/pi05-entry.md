@@ -3,7 +3,7 @@
 统一入口是工作区根目录的 `tools/pi05.sh`。目标是同一个红色方块在小范围内改变起点，
 抓起后放入固定托盘。当前先交付可运行的采集、训练和运行入口，数据之后准备，不设置成功率门槛。
 
-便携包不带示范、导出、统计、缓存、官方基础权重或旧适配器；先按安装说明准备。
+便携包不带示范、导出、统计、缓存、官方基础权重或旧适配器；数据采集只需准备采集和相机环境。
 下面使用新的数据集 `local/zekeep_red_cube_v1` 和实验 `red_cube_v1`。更换数据或相机安装时换一个数据集名；
 每轮训练换一个实验名，避免覆盖已有结果。
 
@@ -17,14 +17,9 @@ cd "$ZKEEP_WS"
 ./tools/pi05.sh doctor
 ```
 
-`help` 不依赖模型环境。`doctor` 检查解释器、ROS 安装、转换后的基础权重和 GPU，
-不加载模型、不打开相机、不连接机械臂。环境缺失时按[安装说明](../../../docs/PI05_INSTALL.md)
-和 [π0.5 环境说明](pi05.md)准备，不向 ROS 或采集环境混装模型依赖。
-
-脚本分别复用采集环境、OpenPI Python 3.11 环境和 ROS 环境。模型路径默认是
-`~/.cache/openpi/openpi-assets/checkpoints/pi05_base_pytorch/model.safetensors`。
-首次准备需要完成官方权重下载、PyTorch 转换和 QLoRA 依赖安装，具体命令见环境说明。
-数据集缓存默认写入 `data/openpi/cache/huggingface_datasets`；新电脑需自行规划 `data` 的磁盘空间。
+`help` 不依赖模型环境。`doctor` 只检查采集依赖和配置路径，不检查模型权重或 GPU，也不打开设备。
+本地数据采集、检查和打包不需要 OpenPI 或下载权重。先按[总 README](../../../README.md#示范数据采集与云端交付)准备采集环境。
+云端交付见[数据打包说明](cloud-data.md)。下文模型导出、训练和执行均为可选流程；相应环境与权重仅在运行模型时需要。
 
 ## 采集新的示范
 
@@ -85,7 +80,7 @@ ros2 service call /zekeep/enable std_srvs/srv/Trigger '{}'
   --output data/pi05_red_cube_v1/review.mp4
 ```
 
-## 导出并训练
+## 可选：导出并训练
 
 正式训练前按完整 episode 分出训练集和验证集。可在 `data/pi05_red_cube_v1/train` 和
 `data/pi05_red_cube_v1/validation` 下分别放指向原始 episode 的符号链接；使用绝对目标路径。
@@ -116,7 +111,7 @@ ros2 service call /zekeep/enable std_srvs/srv/Trigger '{}'
 当前入口使用本机 NF4 QLoRA 实验实现，冻结基座、训练低秩参数和动作投影。
 结果位于 `data/openpi/checkpoints/pi05_zekeep_lora/实验名/`。数据导出和训练结果默认拒绝覆盖。
 
-## 离线检查模型预测
+## 可选：离线检查模型预测
 
 ```bash
 ./tools/pi05.sh predict --repo-id local/zekeep_red_cube_v1 \
