@@ -46,20 +46,8 @@ bash tools/run.sh -m pip check
 本包通过 `COLCON_IGNORE` 排除在 ROS 构建之外。
 
 不需要下载 π0.5 权重，也不需要 GPU 推理。现有 Torch/CUDA 组合仅用于当前数据处理，
-不代表已验证 RTX 5060 上的模型训练或推理兼容性。
 
-## 2. 先运行无硬件模拟
-
-```bash
-bash tools/run.sh -m zekeep_embodied.record \
-  --config configs/record.yaml --simulate --frames 40 \
-  --output /tmp/zekeep_capture_demo
-```
-
-终端会输出新建 episode 的实际路径。模拟数据标记为 `simulated: true`，
-默认禁止导入正式训练集。模拟只验证采集文件流程，不能验证真实相机和电机。
-
-## 3. 检查相机，不连接机械臂
+##  检查相机，不连接机械臂
 
 先关闭其他占用 Orbbec 的程序：
 
