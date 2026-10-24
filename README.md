@@ -31,9 +31,7 @@ git clone --branch 1022 https://github.com/Leocia/Zekeeparm.git "$HOME/Desktop/Z
 cd "$HOME/Desktop/Zekeeparm"
 ```
 
-已有源码时只需进入项目目录，跳过克隆。GitHub `1022` 分支不含 `apps/`，Studio 需另行取得。
-迁移时复制源码，在新电脑重建环境；不要沿用旧电脑的 `build/`、`install/`、`.venv*` 或 CUDA 编译产物。
-数据、模型、密钥和硬件标定须单独核对迁移。
+已有源码时只需进入项目目录，跳过克隆。
 
 ### 2. 配置 Conda 路径
 
