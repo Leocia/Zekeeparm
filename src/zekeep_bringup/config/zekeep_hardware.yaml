@@ -128,7 +128,7 @@ models:
           joint2: {vel_kp: 0.0125, vel_ki: 0.004, pos_kp: 180.0, pos_ki: 0.5, vlim: 0.50}
           joint3: {vel_kp: 0.0125, vel_ki: 0.004, pos_kp: 180.0, pos_ki: 0.5, vlim: 0.50}
           # Normal arm motion uses POS_VEL; gripper force control retains MIT.
-          joint4: {vel_kp: 0.0008, vel_ki: 0.002, pos_kp: 80.0, pos_ki: 1.0, vlim: 0.50}
+          joint4: {vel_kp: 0.00372, vel_ki: 0.002, pos_kp: 54.0, pos_ki: 0.0, vlim: 0.50}
           joint5: {vel_kp: 0.0008, vel_ki: 0.002, pos_kp: 80.0, pos_ki: 1.0, vlim: 0.50}
           joint6: {vel_kp: 0.0008, vel_ki: 0.002, pos_kp: 80.0, pos_ki: 1.0, vlim: 0.50}
         gravity_feedforward:
