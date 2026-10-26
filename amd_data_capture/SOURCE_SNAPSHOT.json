@@ -1,0 +1,679 @@
+{
+  "source_head": "cde23b960fe338277b3b67773d4635a90f9bdb80",
+  "source_state": "Working-tree snapshot, including uncommitted changes; original workspace not modified.",
+  "files_before_packaging_edits": {
+    "src/zekeep_embodied/src/zekeep_embodied/__init__.py": {
+      "source": "src/zekeep_embodied/src/zekeep_embodied/__init__.py",
+      "sha256": "077b4e61d2340b56e232c805e94cf99fedc70056bf9d80a23698370b476ce382"
+    },
+    "src/zekeep_embodied/src/zekeep_embodied/record.py": {
+      "source": "src/zekeep_embodied/src/zekeep_embodied/record.py",
+      "sha256": "8d79944b8fbc8b7d0af8af9018124f6f58d11f06f0891243b9eb24afb59c53ce"
+    },
+    "src/zekeep_embodied/src/zekeep_embodied/storage.py": {
+      "source": "src/zekeep_embodied/src/zekeep_embodied/storage.py",
+      "sha256": "426091714101dccb9f1df1cf51376f39a85a5423e9fe14b4cf6fb7083da6da7b"
+    },
+    "src/zekeep_embodied/src/zekeep_embodied/cameras.py": {
+      "source": "src/zekeep_embodied/src/zekeep_embodied/cameras.py",
+      "sha256": "8d3d31f9c16b90357ac5baede8358fbf7184d325c4a60687e630bb8c5cc2ef60"
+    },
+    "src/zekeep_embodied/src/zekeep_embodied/orbbec_worker.py": {
+      "source": "src/zekeep_embodied/src/zekeep_embodied/orbbec_worker.py",
+      "sha256": "8d5d3fd7aaf95971a749b9218729f9c2bf8b7b3d7390f49625bbe29053444072"
+    },
+    "src/zekeep_embodied/src/zekeep_embodied/dataset.py": {
+      "source": "src/zekeep_embodied/src/zekeep_embodied/dataset.py",
+      "sha256": "2d6b02a949b36426c18957ca71f820a614b2a69a8164b027fe91695e12827e1c"
+    },
+    "src/zekeep_embodied/pyproject.toml": {
+      "source": "src/zekeep_embodied/pyproject.toml",
+      "sha256": "4530d8a68c5a8081396980b2d40e413d2f4ab41951f2f4732366bda0a2da1114"
+    },
+    "src/zekeep_embodied/configs/record.yaml": {
+      "source": "src/zekeep_embodied/configs/record.yaml",
+      "sha256": "bb7da8b4ec9c1c84c9149fd1055defd1ac41f92c16a17c7321ded9966cafd011"
+    },
+    "src/zekeep_camera/drivers/__init__.py": {
+      "source": "src/rebot_grasp/drivers/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "src/zekeep_camera/drivers/camera/base.py": {
+      "source": "src/rebot_grasp/drivers/camera/base.py",
+      "sha256": "63460583ca020243ce05f14dc19874021bdb04fa5754f1ffd7975bed83a8fd56"
+    },
+    "src/zekeep_camera/drivers/camera/orbbec_gemini2.py": {
+      "source": "src/rebot_grasp/drivers/camera/orbbec_gemini2.py",
+      "sha256": "45483aee20119aa98eb43e325da1cab2fa395fb231c01fb5110911caf513e7b5"
+    },
+    "src/zekeep_camera/drivers/camera/__init__.py": {
+      "source": "src/rebot_grasp/drivers/camera/__init__.py",
+      "sha256": "654410f43ddfd558e5eebb1b7246f80aa5cb7de7a1e6354b662d47d2b36fa66a"
+    },
+    "src/zekeep_camera/config/camera/orbbec_gemini2_viewer.json": {
+      "source": "src/rebot_grasp/config/camera/orbbec_gemini2_viewer.json",
+      "sha256": "46243cde6fa88cca000dcce6dd0b2ab2df902d89983a74e8511f981858b6c1b4"
+    },
+    "src/zekeep_teleop/src/lerobot_teleoperator_zhongling/__init__.py": {
+      "source": "src/zekeep_teleop/src/lerobot_teleoperator_zhongling/__init__.py",
+      "sha256": "5ea48cb7220fed06e7c6ddfa93127e357dbf3c79fbe251f5987d370be3917d10"
+    },
+    "src/zekeep_teleop/src/lerobot_teleoperator_zhongling/config_zhongling_leader.py": {
+      "source": "src/zekeep_teleop/src/lerobot_teleoperator_zhongling/config_zhongling_leader.py",
+      "sha256": "9a43d76111d9c4e0e709314e76e92bc41efeafb5e914c793fd7e9e8cd850ce9b"
+    },
+    "src/zekeep_teleop/src/lerobot_teleoperator_zhongling/zhongling_leader.py": {
+      "source": "src/zekeep_teleop/src/lerobot_teleoperator_zhongling/zhongling_leader.py",
+      "sha256": "8742fef37bd21aac6a7e204ab42ef7eaa5cf7c5335f7ecd572849d20610df204"
+    },
+    "src/zekeep_teleop/configs/zhongling_b601_teleop.yaml": {
+      "source": "src/zekeep_teleop/configs/zhongling_b601_teleop.yaml",
+      "sha256": "f278deba73581c259e1a2d14705f739f3f007423740bf6747dcb9810a7fede21"
+    },
+    "src/zekeep_teleop/LICENSE": {
+      "source": "src/zekeep_teleop/LICENSE",
+      "sha256": "23bbd6e4ba3a36a39180d8e83deb9f4cd75a53351807aada5823bd565d44f0e1"
+    },
+    "src/zekeep_teleop/pyproject.toml": {
+      "source": "src/zekeep_teleop/pyproject.toml",
+      "sha256": "58fff6286c17c9b28e1a4d7ea20cc74c10d180f28b5698708082751b8d2e3d57"
+    },
+    "src/zekeepcontroller/zekeepcontroller/__init__.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/__init__.py",
+      "sha256": "6b4f53ba0c0d0c2340cbdcd1a2049274bf7af008428f97a6b62f4e1d569b1da7"
+    },
+    "src/zekeepcontroller/zekeepcontroller/conversions.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/conversions.py",
+      "sha256": "8b918cde25631299d00e52e6422fa3be7934ca1b34301e89dd7312807dc72d6c"
+    },
+    "src/zekeepcontroller/zekeepcontroller/dynamics_validation.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/dynamics_validation.py",
+      "sha256": "cefe2ef7d7b352ebb07e53050626d29035a6121fcac2ab7975387a1865ca630b"
+    },
+    "src/zekeepcontroller/zekeepcontroller/examples/__init__.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/examples/__init__.py",
+      "sha256": "0078e8cc4f0e053f2a9bc42b802795b37b56feeb0539feed877c730c338b40a2"
+    },
+    "src/zekeepcontroller/zekeepcontroller/examples/gravity_compensation.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/examples/gravity_compensation.py",
+      "sha256": "0223bd8790700ff715d68c5e0bff2ee51a72db92241e2fdb45932e9fe59258ea"
+    },
+    "src/zekeepcontroller/zekeepcontroller/examples/gripper_control.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/examples/gripper_control.py",
+      "sha256": "6cb025869d3d235946bb133abc71ea98bbd1a32859604bdee178a8f9a6b48dfc"
+    },
+    "src/zekeepcontroller/zekeepcontroller/examples/move_to.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/examples/move_to.py",
+      "sha256": "636d5a01d5331b052fe6426bb2f6d041ceaa214336f6dfa6c56b69cad9b2f165"
+    },
+    "src/zekeepcontroller/zekeepcontroller/examples/move_to_pose.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/examples/move_to_pose.py",
+      "sha256": "e740e562968a5c98e89fc8e0f0d8d8861c46fb1c091ddee68bf7718a946522ad"
+    },
+    "src/zekeepcontroller/zekeepcontroller/gripper_grasp.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/gripper_grasp.py",
+      "sha256": "1e279278e617c65c8a8683161e7d6aab825833efeb095029ada61ccd0c3d5eb9"
+    },
+    "src/zekeepcontroller/zekeepcontroller/hardware_config.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/hardware_config.py",
+      "sha256": "c07c7ecab385aded77bd6099521875cab384e7b8267bcd0871e9b6ecebca4011"
+    },
+    "src/zekeepcontroller/zekeepcontroller/hardware_manager.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/hardware_manager.py",
+      "sha256": "e3d9033c5daaf1c39a0f7a3c88faa1203a4cf6aeceb44644cbd1d1291bc6c1a7"
+    },
+    "src/zekeepcontroller/zekeepcontroller/joint_mapping.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/joint_mapping.py",
+      "sha256": "4e5d0b316a8bb7ad4df598070f6986c5bfe42d2e8101f931e9e408f5ec452d83"
+    },
+    "src/zekeepcontroller/zekeepcontroller/motor_passthrough.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/motor_passthrough.py",
+      "sha256": "3f2828f080823bcb009dae8a71f3d9077e210ead9012b8d13d130d349eee75d1"
+    },
+    "src/zekeepcontroller/zekeepcontroller/ros_actions.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/ros_actions.py",
+      "sha256": "69ffed58f723a5be83089461164d55814dde9e08b7380ed8931538b5ef7e3105"
+    },
+    "src/zekeepcontroller/zekeepcontroller/ros_publishers.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/ros_publishers.py",
+      "sha256": "f0936b32e9c5f43fb3881ea025b6b80d489c7da70554953319d3e4f3761f7247"
+    },
+    "src/zekeepcontroller/zekeepcontroller/ros_services.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/ros_services.py",
+      "sha256": "bfeb8ee14e1e1a48203f9b5c18cf19e1e696d1e75de175215d2ab0cc531ef066"
+    },
+    "src/zekeepcontroller/zekeepcontroller/servo_stream.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/servo_stream.py",
+      "sha256": "a487600a6b136e88a257cfd4172a9d6b039a2343115261f84b19d6ecd5bd1d15"
+    },
+    "src/zekeepcontroller/zekeepcontroller/web_task_gate.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/web_task_gate.py",
+      "sha256": "074b52f07308642d931d853a178e3821770d4a3254690cfd6a31aff80920e780"
+    },
+    "src/zekeepcontroller/zekeepcontroller/zekeep_controller.py": {
+      "source": "src/zekeepcontroller/zekeepcontroller/zekeep_controller.py",
+      "sha256": "4b1ddd8595c97ecea29ae6db897e836db746bade193fa77ab2ee8224712dccc8"
+    },
+    "src/zekeepcontroller/.gitignore": {
+      "source": "src/zekeepcontroller/.gitignore",
+      "sha256": "7f3e1b4740e6826975fbd97eac5c185e10ad0648cfea1f29b356664e9189ba1d"
+    },
+    "src/zekeepcontroller/setup.py": {
+      "source": "src/zekeepcontroller/setup.py",
+      "sha256": "a52eb5e175f87bd935588bfe5c01ffbb83823337069e464e68c025b142e64446"
+    },
+    "src/zekeepcontroller/package.xml": {
+      "source": "src/zekeepcontroller/package.xml",
+      "sha256": "92418e1d4e886b31c8c5b86f2bb1802bb9df3335a1f36e0db1ab5d23c06c0f5a"
+    },
+    "src/zekeepcontroller/setup.cfg": {
+      "source": "src/zekeepcontroller/setup.cfg",
+      "sha256": "8cec9377b7ab13b8980aab9ae33e2a7576a539a889031ce6d0f2c511526fc757"
+    },
+    "src/zekeepcontroller/resource/zekeepcontroller": {
+      "source": "src/zekeepcontroller/resource/zekeepcontroller",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "src/zekeep_msgs/msg/ArmStatus.msg": {
+      "source": "src/zekeep_msgs/msg/ArmStatus.msg",
+      "sha256": "18cedcbde5e39e51a9127dc05ae199427635612026d5f80ac4e0137c0bc66257"
+    },
+    "src/zekeep_msgs/msg/JointMitCmd.msg": {
+      "source": "src/zekeep_msgs/msg/JointMitCmd.msg",
+      "sha256": "464238044b10069ed6a7d4ad99bf89a0adaecb239f767a8b5b1f98bbb42600d0"
+    },
+    "src/zekeep_msgs/msg/JointMotorState.msg": {
+      "source": "src/zekeep_msgs/msg/JointMotorState.msg",
+      "sha256": "205a6258117853e722324079307e348e73cebc4e668b4ffe555d2d94eb6699ef"
+    },
+    "src/zekeep_msgs/msg/JointPosVelCmd.msg": {
+      "source": "src/zekeep_msgs/msg/JointPosVelCmd.msg",
+      "sha256": "2f8055fe4ffb4fda476deaab3bfc7d6862adbabee497eaa2ef933ae38416325b"
+    },
+    "src/zekeep_msgs/srv/GripperCommand.srv": {
+      "source": "src/zekeep_msgs/srv/GripperCommand.srv",
+      "sha256": "8e49e90d76d3af4d1714a10f10c893a789e892964b5c22f8c8762c8afd676ae1"
+    },
+    "src/zekeep_msgs/srv/MoveToPoseIK.srv": {
+      "source": "src/zekeep_msgs/srv/MoveToPoseIK.srv",
+      "sha256": "0bece1b849a5a2bdcf098fc401c5ada2837dc60a60fe99143b82889e18a62745"
+    },
+    "src/zekeep_msgs/srv/SetGripper.srv": {
+      "source": "src/zekeep_msgs/srv/SetGripper.srv",
+      "sha256": "b0262df014461c1f899af40808ff60d2db79eb30205ba2f9e0696361aeed9d4c"
+    },
+    "src/zekeep_msgs/srv/SetZero.srv": {
+      "source": "src/zekeep_msgs/srv/SetZero.srv",
+      "sha256": "4e4ac62651da01b3bde3238ea81b9e80d654c8e006325ec445bd62974c2df2e2"
+    },
+    "src/zekeep_msgs/srv/WebTaskLease.srv": {
+      "source": "src/zekeep_msgs/srv/WebTaskLease.srv",
+      "sha256": "44aa275712f3fbf2118a9147077816dfb1244dea110710977d32e2fd0e25a343"
+    },
+    "src/zekeep_msgs/srv/WebTeachCommand.srv": {
+      "source": "src/zekeep_msgs/srv/WebTeachCommand.srv",
+      "sha256": "2252ea84570fe3abed4a3cf58a45713755c5abeb0a1466f01637146ca6ad7cd8"
+    },
+    "src/zekeep_msgs/.gitignore": {
+      "source": "src/zekeep_msgs/.gitignore",
+      "sha256": "599e8d09a18b6bac6f70ed12bf96f67e49c4d992ee2601bc173d92fbcb64b11d"
+    },
+    "src/zekeep_msgs/action/GripperGrasp.action": {
+      "source": "src/zekeep_msgs/action/GripperGrasp.action",
+      "sha256": "613420c8a52907b31d15f426284b53b6cec9b23eaaf04b06ce68a0c69475b20b"
+    },
+    "src/zekeep_msgs/action/MoveToPose.action": {
+      "source": "src/zekeep_msgs/action/MoveToPose.action",
+      "sha256": "43ad557347d44eee5b9a2062d03a682650f9407788bb3476767d9be7a9f23639"
+    },
+    "src/zekeep_msgs/action/WebGrasp.action": {
+      "source": "src/zekeep_msgs/action/WebGrasp.action",
+      "sha256": "adec7baaf7c4332b3fd4f35fd164a00f30046f4b55e5e0a0f989b0880beb713b"
+    },
+    "src/zekeep_msgs/package.xml": {
+      "source": "src/zekeep_msgs/package.xml",
+      "sha256": "7a396b00628a10ca9c502f372e59976f0f447d3dea0a4a9c662172e4571e13dd"
+    },
+    "src/zekeep_msgs/CMakeLists.txt": {
+      "source": "src/zekeep_msgs/CMakeLists.txt",
+      "sha256": "6308ee5e6ed29327c32ecb18462b2b1edd8d9165334d8b9e74de13494b31616f"
+    },
+    "src/zekeep_joystick/zekeep_joystick/__init__.py": {
+      "source": "src/zekeep_joystick/zekeep_joystick/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "src/zekeep_joystick/zekeep_joystick/cartesian_node.py": {
+      "source": "src/zekeep_joystick/zekeep_joystick/cartesian_node.py",
+      "sha256": "36dc9f3433b2f95a7904aa03e2e16b15157a06897b6c0b1408f2617f2609f003"
+    },
+    "src/zekeep_joystick/zekeep_joystick/joystick_node.py": {
+      "source": "src/zekeep_joystick/zekeep_joystick/joystick_node.py",
+      "sha256": "0a63805b1e8ce52a707be8b072b52b695d0fd8c43eb9d162322fdc224eb79d30"
+    },
+    "src/zekeep_joystick/zekeep_joystick/mapping.py": {
+      "source": "src/zekeep_joystick/zekeep_joystick/mapping.py",
+      "sha256": "246bee98ad9a7b96b8f15b12df50530648b0abcc6d239beb29f5b21c6a44674a"
+    },
+    "src/zekeep_joystick/setup.py": {
+      "source": "src/zekeep_joystick/setup.py",
+      "sha256": "c87578c488dc7a97e6f223332b2dd1854ab8c14ba661a24ca5128de9cd075a48"
+    },
+    "src/zekeep_joystick/package.xml": {
+      "source": "src/zekeep_joystick/package.xml",
+      "sha256": "1aa73c5225517f1f12a150dc0637f2052981647df5f408ec7422958cb69be60b"
+    },
+    "src/zekeep_joystick/launch/cartesian_joystick.launch.py": {
+      "source": "src/zekeep_joystick/launch/cartesian_joystick.launch.py",
+      "sha256": "89f207a5c784b60f4feef466a24f46613b76869f5510fa9194d3aa7f949b42d9"
+    },
+    "src/zekeep_joystick/launch/joystick.launch.py": {
+      "source": "src/zekeep_joystick/launch/joystick.launch.py",
+      "sha256": "51b618ffe3646a9c1591c1b9243899d422bd9ac4be4e024c953e7c316ea9af79"
+    },
+    "src/zekeep_joystick/config/xbox.yaml": {
+      "source": "src/zekeep_joystick/config/xbox.yaml",
+      "sha256": "9d20994028803e55fd0d72d4ad429f95e584d5bd6cb52c596ed4635f12bdcc38"
+    },
+    "src/zekeep_joystick/config/zikway.yaml": {
+      "source": "src/zekeep_joystick/config/zikway.yaml",
+      "sha256": "fb3c89610872faa5359c31f2f9a1280515cc5d116e7d1f7129a70e502935da65"
+    },
+    "src/zekeep_joystick/config/zikway_cartesian.yaml": {
+      "source": "src/zekeep_joystick/config/zikway_cartesian.yaml",
+      "sha256": "ebf7ddeacbebce5098fe8e1d5b2ff3d522093bafd816bfb0a3de1df8627a295f"
+    },
+    "src/zekeep_joystick/setup.cfg": {
+      "source": "src/zekeep_joystick/setup.cfg",
+      "sha256": "c8eefeabc199642de63cc7276347779690fe8d1f029f34ba2085ebe33048415b"
+    },
+    "src/zekeep_joystick/resource/zekeep_joystick": {
+      "source": "src/zekeep_joystick/resource/zekeep_joystick",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "src/zekeep_bringup/setup.cfg": {
+      "source": "src/zekeep_bringup/setup.cfg",
+      "sha256": "cdc064abee946d72936ca3eada2b188df15d9cab388af5a546e6e04781b5a750"
+    },
+    "src/zekeep_bringup/resource/zekeep_bringup": {
+      "source": "src/zekeep_bringup/resource/zekeep_bringup",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "src/zekeep_bringup/description/collision/base_link.STL": {
+      "source": "src/zekeep_bringup/description/collision/base_link.STL",
+      "sha256": "9c7b8596c653d31b6235ce676b0ac226d529017dbc551330acc45e58f0c64762"
+    },
+    "src/zekeep_bringup/description/collision/gripper_base.STL": {
+      "source": "src/zekeep_bringup/description/collision/gripper_base.STL",
+      "sha256": "b3eb524f8355403bf6a90d96f144eaf1f8ab66dd769040d70cea1da3483488a9"
+    },
+    "src/zekeep_bringup/description/collision/left_link.STL": {
+      "source": "src/zekeep_bringup/description/collision/left_link.STL",
+      "sha256": "6c2b1a12dabd95a848bed8c6c4f4bb3fb5209e2fa016f59dea9b8eba3fe19832"
+    },
+    "src/zekeep_bringup/description/collision/link1.STL": {
+      "source": "src/zekeep_bringup/description/collision/link1.STL",
+      "sha256": "9fb6adda97e71ede01ea162e3722783d25f59420220f9083e4636275d574987d"
+    },
+    "src/zekeep_bringup/description/collision/link2.STL": {
+      "source": "src/zekeep_bringup/description/collision/link2.STL",
+      "sha256": "afbbaf279178ff47f43bb7c2b423178f556f79daf57b87fb553e387bf0fe7674"
+    },
+    "src/zekeep_bringup/description/collision/link3.STL": {
+      "source": "src/zekeep_bringup/description/collision/link3.STL",
+      "sha256": "8792d5f5218ae3d4df1dbef8a011e351b63bc3ebd354717de463f02aa4e7aa6e"
+    },
+    "src/zekeep_bringup/description/collision/link4.STL": {
+      "source": "src/zekeep_bringup/description/collision/link4.STL",
+      "sha256": "718c383875120c9830815ac04ba3e09b8a3e6e8b893a6846a468e1fe9492ff12"
+    },
+    "src/zekeep_bringup/description/collision/link5.STL": {
+      "source": "src/zekeep_bringup/description/collision/link5.STL",
+      "sha256": "385d6412e6efe0751e37ebd98c7a1b9e559510251d3900bdd0319c659d2dccf7"
+    },
+    "src/zekeep_bringup/description/collision/link6.STL": {
+      "source": "src/zekeep_bringup/description/collision/link6.STL",
+      "sha256": "0b3c690e0f83454a21b090ab30e20bdacd606dd31192e3da6e4fd1b2bb46ed9e"
+    },
+    "src/zekeep_bringup/description/collision/right_link.STL": {
+      "source": "src/zekeep_bringup/description/collision/right_link.STL",
+      "sha256": "026c76a0245813edbd2c597f37d5a395817d4a1efacccbb4b5d37121c4efb720"
+    },
+    "src/zekeep_bringup/description/meshes/base_link.STL": {
+      "source": "src/zekeep_bringup/description/meshes/base_link.STL",
+      "sha256": "9c7b8596c653d31b6235ce676b0ac226d529017dbc551330acc45e58f0c64762"
+    },
+    "src/zekeep_bringup/description/meshes/gripper_base.STL": {
+      "source": "src/zekeep_bringup/description/meshes/gripper_base.STL",
+      "sha256": "b3eb524f8355403bf6a90d96f144eaf1f8ab66dd769040d70cea1da3483488a9"
+    },
+    "src/zekeep_bringup/description/meshes/left_link.STL": {
+      "source": "src/zekeep_bringup/description/meshes/left_link.STL",
+      "sha256": "6c2b1a12dabd95a848bed8c6c4f4bb3fb5209e2fa016f59dea9b8eba3fe19832"
+    },
+    "src/zekeep_bringup/description/meshes/link1.STL": {
+      "source": "src/zekeep_bringup/description/meshes/link1.STL",
+      "sha256": "9fb6adda97e71ede01ea162e3722783d25f59420220f9083e4636275d574987d"
+    },
+    "src/zekeep_bringup/description/meshes/link2.STL": {
+      "source": "src/zekeep_bringup/description/meshes/link2.STL",
+      "sha256": "afbbaf279178ff47f43bb7c2b423178f556f79daf57b87fb553e387bf0fe7674"
+    },
+    "src/zekeep_bringup/description/meshes/link3.STL": {
+      "source": "src/zekeep_bringup/description/meshes/link3.STL",
+      "sha256": "8792d5f5218ae3d4df1dbef8a011e351b63bc3ebd354717de463f02aa4e7aa6e"
+    },
+    "src/zekeep_bringup/description/meshes/link4.STL": {
+      "source": "src/zekeep_bringup/description/meshes/link4.STL",
+      "sha256": "718c383875120c9830815ac04ba3e09b8a3e6e8b893a6846a468e1fe9492ff12"
+    },
+    "src/zekeep_bringup/description/meshes/link5.STL": {
+      "source": "src/zekeep_bringup/description/meshes/link5.STL",
+      "sha256": "385d6412e6efe0751e37ebd98c7a1b9e559510251d3900bdd0319c659d2dccf7"
+    },
+    "src/zekeep_bringup/description/meshes/link6.STL": {
+      "source": "src/zekeep_bringup/description/meshes/link6.STL",
+      "sha256": "0b3c690e0f83454a21b090ab30e20bdacd606dd31192e3da6e4fd1b2bb46ed9e"
+    },
+    "src/zekeep_bringup/description/meshes/right_link.STL": {
+      "source": "src/zekeep_bringup/description/meshes/right_link.STL",
+      "sha256": "026c76a0245813edbd2c597f37d5a395817d4a1efacccbb4b5d37121c4efb720"
+    },
+    "src/zekeep_bringup/description/urdf/sixaxis.urdf": {
+      "source": "src/zekeep_bringup/description/urdf/sixaxis.urdf",
+      "sha256": "56dbb3e2437bd3fd87ef9e7f6f9e835e46538ecd040d803fa68c1d67ebb433d3"
+    },
+    "src/zekeep_bringup/config/zekeep_hardware.yaml": {
+      "source": "src/zekeep_bringup/config/zekeep_hardware.yaml",
+      "sha256": "c771e083c75d5b8f4ddbf03b34f231e6a481cc8ffd3946ddadf5752d2f5e8fb1"
+    },
+    "src/zekeep_bringup/launch/driver.launch.py": {
+      "source": "src/zekeep_bringup/launch/driver.launch.py",
+      "sha256": "8d6dc321785b80253477b508721954943329c230e1639bf82c1af6a41e1a638c"
+    },
+    "src/zekeep_bringup/zekeep_bringup/__init__.py": {
+      "source": "src/zekeep_bringup/zekeep_bringup/__init__.py",
+      "sha256": "90a4edd961c02aadfc56f60f719c1144a31f04c244d40920e517b3ef7fe70a76"
+    },
+    "src/zekeep_bringup/zekeep_bringup/launch_config.py": {
+      "source": "src/zekeep_bringup/zekeep_bringup/launch_config.py",
+      "sha256": "797b6fbdcafecaf4b34c99e76fcb1d57dae53bf34cb995e951cbd160a0a8d4c0"
+    },
+    "src/zekeep_bringup/package.xml": {
+      "source": "src/zekeep_bringup/package.xml",
+      "sha256": "219007e06a844b99e1068347289c51bd8753d36e38fed4d63fa1cf768b1da2ef"
+    },
+    "src/zekeep_moveit_config/package.xml": {
+      "source": "src/zekeep_moveit_config/package.xml",
+      "sha256": "5f3cfb6f0d7ec433cce6aacabd5f91ba41df5b43914c87fcb3aca6d27575c593"
+    },
+    "src/zekeep_moveit_config/.setup_assistant": {
+      "source": "src/zekeep_moveit_config/.setup_assistant",
+      "sha256": "f4c7be59e49deed24c88f86ea995b869efd46f893c7a3f6d08d275e214c2b87e"
+    },
+    "src/zekeep_moveit_config/launch/hardware.launch.py": {
+      "source": "src/zekeep_moveit_config/launch/hardware.launch.py",
+      "sha256": "39272f5247a59ab84772ef08dcac377d720f516fca54ee95530d50a7b12039c5"
+    },
+    "src/zekeep_moveit_config/launch/moveit_launch_helpers.py": {
+      "source": "src/zekeep_moveit_config/launch/moveit_launch_helpers.py",
+      "sha256": "08e4893111c6ab3e081d05ec0d07ab8d297b5c46d98abf4ffbc401a14642c1f7"
+    },
+    "src/zekeep_moveit_config/launch/moveit.rviz": {
+      "source": "src/zekeep_moveit_config/launch/moveit.rviz",
+      "sha256": "dc59619c5b68a53dc9daf1ee967881bcb7402a5c6d1d5c16726178fd30fb891b"
+    },
+    "src/zekeep_moveit_config/scripts/worktable_collision.py": {
+      "source": "src/zekeep_moveit_config/scripts/worktable_collision.py",
+      "sha256": "f52b809acc039b3de03921f62d8859bb36e6598888848e25a2e648a911b12c43"
+    },
+    "src/zekeep_moveit_config/scripts/training_box_collision.sh": {
+      "source": "src/zekeep_moveit_config/scripts/training_box_collision.sh",
+      "sha256": "bb6599eae6c1cd923a875b30b14aca0fb72f6cddd00fb4e010b5c4dd4429513c"
+    },
+    "src/zekeep_moveit_config/config/ompl_planning.yaml": {
+      "source": "src/zekeep_moveit_config/config/ompl_planning.yaml",
+      "sha256": "05ce1faa88106912390f998e502eff3b7a7b701b2dcdf8bb5cd220c3b53e1dc8"
+    },
+    "src/zekeep_moveit_config/config/kinematics.yaml": {
+      "source": "src/zekeep_moveit_config/config/kinematics.yaml",
+      "sha256": "746f39b2cda25a5af3e95e465907400ecba697a884f3d0126176ca3e70962a30"
+    },
+    "src/zekeep_moveit_config/config/zekeep.ros2_control.xacro": {
+      "source": "src/zekeep_moveit_config/config/zekeep.ros2_control.xacro",
+      "sha256": "43c4c431e39a823e85e14fd3c316ab57541b7e2dca8c061f2ce8afaf476ad062"
+    },
+    "src/zekeep_moveit_config/config/moveit_hardware_controllers.yaml": {
+      "source": "src/zekeep_moveit_config/config/moveit_hardware_controllers.yaml",
+      "sha256": "8e1d057fc9d86e42816229d21fabdd1f8ee58b9b309f0c38092913a4934b2bcb"
+    },
+    "src/zekeep_moveit_config/config/zekeep.urdf.xacro": {
+      "source": "src/zekeep_moveit_config/config/zekeep.urdf.xacro",
+      "sha256": "06a44550f4e36c585c82cd103dfb9331af2ae4ed7e408e8f9ac22df2cc04c4a0"
+    },
+    "src/zekeep_moveit_config/config/joint_limits.yaml": {
+      "source": "src/zekeep_moveit_config/config/joint_limits.yaml",
+      "sha256": "306038a9901490eaa1d256cd520f5ce81024e5bfa4590ab2acd28a954859bfde"
+    },
+    "src/zekeep_moveit_config/config/ros2_controllers.yaml": {
+      "source": "src/zekeep_moveit_config/config/ros2_controllers.yaml",
+      "sha256": "0ef18dae2df6454646ddc79972133469ba8aef1afa1294d7473f11ff88c8d2af"
+    },
+    "src/zekeep_moveit_config/config/initial_positions.yaml": {
+      "source": "src/zekeep_moveit_config/config/initial_positions.yaml",
+      "sha256": "1d4a7049f18de52e9268e9b5d178b73e9f51559c9f96945fb48c350cc31025f5"
+    },
+    "src/zekeep_moveit_config/config/moveit_controllers.yaml": {
+      "source": "src/zekeep_moveit_config/config/moveit_controllers.yaml",
+      "sha256": "4190fad5a61fd6bb0d8c1e86550dc16ad8d8762535f344d1e31594e00836595c"
+    },
+    "src/zekeep_moveit_config/config/zekeep.srdf": {
+      "source": "src/zekeep_moveit_config/config/zekeep.srdf",
+      "sha256": "dcfd0f2971663d679e856b1f43a3c010adb4d56d9f3900beac2d189b69a48028"
+    },
+    "third_party/reBotArm_control_py/pyproject.toml": {
+      "source": "third_party/reBotArm_control_py/pyproject.toml",
+      "sha256": "2717877ae5f22875d346b875a86f82591f3277a772339f9a9ce51b39abb622f6"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/__init__.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/__init__.py",
+      "sha256": "ecf948178e8eab67c72fc5f941f049a3911ab5212ab2b4bf44adc15d59ad2d04"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/actuator/__init__.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/actuator/__init__.py",
+      "sha256": "a189a5e09c3f31451afdaca41755bfcffa58deb90835f5efd9da947467228723"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/actuator/rebotarm.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/actuator/rebotarm.py",
+      "sha256": "26c9c09a2b8e79d2bc16165f641f19a96b62d1ab9d955a1bbcb8f94585a461a5"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/controllers/__init__.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/controllers/__init__.py",
+      "sha256": "8f19469bf26a0eb932ca15dd3fbe948c200e6f16a3ce345fc5d6dbc4b0d00f68"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/controllers/rebotarm_endpose_controller.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/controllers/rebotarm_endpose_controller.py",
+      "sha256": "772b1fa08bd101efb2c8fa0519030fec60e4e6476e5a9aca5f571a198e6fdf89"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/__init__.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/__init__.py",
+      "sha256": "e6005c75e6499872fa06cbc09c97180873ba26624647e562963ed2a11f1e32f2"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/centroidal.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/centroidal.py",
+      "sha256": "0d25d882e1c071777430fb9f56d33212fd985f06a6ec186ddc027429944fe5f3"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/derivatives.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/derivatives.py",
+      "sha256": "3d9cddedda26a0b0518a0419d0c082df1165871135efca732304993f4e12600c"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/energy.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/energy.py",
+      "sha256": "2182bb2f6a36a97cdf30932562081315c062f816b216f9402e7c3cf8a958507d"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/forward_dynamics.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/forward_dynamics.py",
+      "sha256": "06aa453473e47a7705d14e167d615ade7072729958d37d08b2a1dd3cba464fbb"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/inertia.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/inertia.py",
+      "sha256": "d763f582703416dc72cef90f363c0878735fae770e43258b0f07a534bd2a3521"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/inverse_dynamics.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/inverse_dynamics.py",
+      "sha256": "f0dce19f5e5a25c712c9741130f822335cde63964773e1fe4be3c9087257d8f4"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/robot_model.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/dynamics/robot_model.py",
+      "sha256": "27ff5310f95c753adcd553f41eeb011bcedf4863530321a1bcb8d9f8b9ff2a87"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/__init__.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/__init__.py",
+      "sha256": "d6391d6d7c520b3376e70510354d3e9360c3cb0626e13df4236f808532badc84"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/forward_kinematics.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/forward_kinematics.py",
+      "sha256": "8cfa975f8af36032d41a1126c1b1b108bc89f00abfd3b90cb1ababff0433f74a"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/inverse_kinematics.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/inverse_kinematics.py",
+      "sha256": "533f0ce71a076f02600711b8d2770a86d1eaf11571a4ca9797baa2c8a82e3320"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/robot_model.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/kinematics/robot_model.py",
+      "sha256": "974cbd3f44130b27ae2178018b09d293ddd38265a8bb409f0b24a43c64a84bfb"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/__init__.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/__init__.py",
+      "sha256": "5e59eaf60726305f22be6dab12f94c608c25dd95d8a80dd77fc2bae72498dbe0"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/clik_tracker.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/clik_tracker.py",
+      "sha256": "417f02002436348e800337839afe58f900277e23b7d85bfc8794e3efc287d5c0"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/sampler.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/sampler.py",
+      "sha256": "d089847f77cdf96bd46cf4f2be4db02de64ca804038b6bd7a3d8732892c9fd49"
+    },
+    "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/trajectory_planner.py": {
+      "source": "third_party/reBotArm_control_py/reBotArm_control_py/trajectory/trajectory_planner.py",
+      "sha256": "919759a23b70d41a3a92a425e5ba7c5efd5bb2fa49e2024f2454aafb218c691b"
+    },
+    "third_party/reBotArm_control_py/config/rebotarm.yaml": {
+      "source": "third_party/reBotArm_control_py/config/rebotarm.yaml",
+      "sha256": "e121cc3cadef980852bd6b997d8cc8b3a78bd30636550c702f6796669e7ce953"
+    },
+    "third_party/reBotArm_control_py/config/rebotarm_dm.yaml": {
+      "source": "third_party/reBotArm_control_py/config/rebotarm_dm.yaml",
+      "sha256": "826a6654ded7cd44a2ce61635f656cd78b07fba3a5e76b8b8ea6989419af72e0"
+    },
+    "third_party/reBotArm_control_py/config/rebotarm_rs.yaml": {
+      "source": "third_party/reBotArm_control_py/config/rebotarm_rs.yaml",
+      "sha256": "810cd5f11291d3c8eae9add24d50ffa2f58d19c18e2bd1d7d73eb7da50833dfb"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/base_link.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/base_link.STL",
+      "sha256": "f3647598b3fcf3b3a8eeaf5f4f15cf38eacdb90c089a650532427078e7adaf7c"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/gripper_base.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/gripper_base.STL",
+      "sha256": "1f83bebd14652edbead29af1b78ad903a1e50006006eef10b8cd7011e30a10a2"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/left_link.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/left_link.STL",
+      "sha256": "2fc6e0d3c758b4f3e817db25daea43d3afd5e2d854969f44f009cd8eb358a457"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link1.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link1.STL",
+      "sha256": "1d507d9487455210e36ad6f822a7e804587cc3acf6c0f890427a0a103dc05cdb"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link2.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link2.STL",
+      "sha256": "4952106b946a310b968a72555b92ea1dfcb8894a280a657cb933159865b583a3"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link3.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link3.STL",
+      "sha256": "2d992463bb50cc6f1d1f8275bbfbcc2489d19413289ca2d07d9e0e5d39bedc06"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link4.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link4.STL",
+      "sha256": "8b8a5a2ef9cdb37578cb29818f2f0e6eb9ccab4cbef94a731e25333515083489"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link5.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link5.STL",
+      "sha256": "63929f264a6336ed1770fd82a444ffe10fc6cfbb5675defd13f51175ce01aff0"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link6.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/link6.STL",
+      "sha256": "ebd21acefeca11a74b53acfad9d618533acec67f9754ab4243c315c4293ecee9"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/right_link.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/meshes/right_link.STL",
+      "sha256": "7e4ddf9131361221e5b67167b545fd81d51cf984413dda09fb67534a12944c65"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.csv": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.csv",
+      "sha256": "5b921c678f5c003869a9b410ad866fcc172f67435efc905fd32bd16e9434d959"
+    },
+    "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf": {
+      "source": "third_party/reBotArm_control_py/urdf/00-arm-rs_asm-v3/urdf/00-arm-rs_asm-v3.urdf",
+      "sha256": "fcb4f687a11a43bf611ac471fe39ad9df76af37961f48554310a7488c80de703"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/base_link.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/base_link.STL",
+      "sha256": "f3647598b3fcf3b3a8eeaf5f4f15cf38eacdb90c089a650532427078e7adaf7c"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/gripper_base.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/gripper_base.STL",
+      "sha256": "1f83bebd14652edbead29af1b78ad903a1e50006006eef10b8cd7011e30a10a2"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/left_link.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/left_link.STL",
+      "sha256": "2fc6e0d3c758b4f3e817db25daea43d3afd5e2d854969f44f009cd8eb358a457"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link1.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link1.STL",
+      "sha256": "1d507d9487455210e36ad6f822a7e804587cc3acf6c0f890427a0a103dc05cdb"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link2.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link2.STL",
+      "sha256": "4952106b946a310b968a72555b92ea1dfcb8894a280a657cb933159865b583a3"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link3.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link3.STL",
+      "sha256": "2d992463bb50cc6f1d1f8275bbfbcc2489d19413289ca2d07d9e0e5d39bedc06"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link4.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link4.STL",
+      "sha256": "8b8a5a2ef9cdb37578cb29818f2f0e6eb9ccab4cbef94a731e25333515083489"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link5.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link5.STL",
+      "sha256": "63929f264a6336ed1770fd82a444ffe10fc6cfbb5675defd13f51175ce01aff0"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link6.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/link6.STL",
+      "sha256": "ebd21acefeca11a74b53acfad9d618533acec67f9754ab4243c315c4293ecee9"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/right_link.STL": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/meshes/right_link.STL",
+      "sha256": "7e4ddf9131361221e5b67167b545fd81d51cf984413dda09fb67534a12944c65"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/urdf/reBot-DevArm_fixend.csv": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/urdf/reBot-DevArm_fixend.csv",
+      "sha256": "f76139ca2d62c9632de1fd178da835f8b3493f9fac1861bfe2f6bea77dac59b4"
+    },
+    "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/urdf/reBot-DevArm_fixend.urdf": {
+      "source": "third_party/reBotArm_control_py/urdf/reBot-DevArm_fixend_description/urdf/reBot-DevArm_fixend.urdf",
+      "sha256": "a7bdc70dbea899a49830014cbe398e9e660c5abfb764ef065c6ad7f1aec9f599"
+    },
+    "tools/requirements-ros-sdk.txt": {
+      "source": "tools/requirements-ros-sdk.txt",
+      "sha256": "4fc4e0482e56673699f236683c62940a8a4cc380ffb54291dadcec54600c7141"
+    },
+    "tools/activate_ros.sh": {
+      "source": "tools/activate_ros.sh",
+      "sha256": "40849822b8f2407cb5cc476e3a9469e2ddc980e31e60a353883d6aaa5d576cb9"
+    }
+  },
+  "source_project": "Zekeeparm_ws"
+}

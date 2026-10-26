@@ -1,0 +1,8 @@
+-r requirements-capture.txt
+lerobot==0.4.4
+lerobot-robot-seeed-b601==1.0.0
+motorbridge==0.4.9
+torch==2.6.0+cpu
+torchvision==0.21.0+cpu
+torchcodec==0.2.1
+pyserial==3.5

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=71,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zekeep-embodied"
+version = "0.1.0"
+description = "CPU data capture, raw-data inspection, and video review for Zekeep"
+requires-python = ">=3.10,<3.13"
+dependencies = ["numpy>=2,<2.3", "opencv-python-headless>=4.12,<4.13", "PyYAML>=6,<7"]
+
+[project.scripts]
+zekeep-record = "zekeep_embodied.record:main"
+zekeep-dataset = "zekeep_embodied.dataset:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

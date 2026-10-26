@@ -1,0 +1,13 @@
+camera:
+  type: orbbec_gemini2
+  serial: "CV2C861000R7"
+  color_width: 1280
+  color_height: 800
+  fps: 30
+  # Orbbec Viewer export. Relative paths resolve from src/zekeep_camera.
+  # Camera controls come only from this preset; no YAML value overrides it.
+  preset_json: config/camera/orbbec_gemini2_viewer.json
+  # The active YUYV stream is already geometrically corrected. Re-applying
+  # Orbbec's factory coefficients causes multi-pixel ChArUco reprojection error.
+  color_distortion_mode: zero
+

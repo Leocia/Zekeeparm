@@ -1,0 +1,38 @@
+# Paths are relative to this file. Keep motor calibration in the existing source.
+teleop_config: ../../zekeep_teleop/configs/zhongling_b601_teleop.yaml
+output: ../../../data/capture
+task: 把红色方块放入托盘
+installation_id: wrist_c100_global_trial_v1
+# C100 currently delivers ~15 FPS even when the driver reports 30.
+# Sample at 10 Hz so each dual-camera observation contains fresh frames.
+fps: 10
+max_sync_s: 0.10
+max_cycle_s: 0.20
+queue_size: 16
+# Collector-only relative limit, degrees; never replace calibrated joint limits.
+max_target_step_deg: 2.0
+# Read-only ROS joystick capture. The recorder observes the already running
+# driver and joystick node; it never enables motors or publishes commands.
+ros_joystick:
+  arm_namespace: zekeep
+  joy_topic: /joy
+  hardware_config: ../../zekeep_bringup/config/zekeep_hardware.yaml
+  deadman_button: 6
+  close_button: 0
+  open_button: 1
+  max_state_age_s: 0.10
+  connect_timeout_s: 5.0
+cameras:
+  wrist:
+    type: orbbec
+    # Camera SDK uses its own NumPy 1.x environment.
+    python: ../../../.venv-camera/bin/python
+    config: ../../zekeep_camera/config/camera.yaml
+  global:
+    type: opencv
+    model: WHEELTEC C100
+    device: /dev/v4l/by-id/usb-HJ_USB_2.0_Camera_HJ_USB_2.0_Camera_SN0001-video-index0
+    fourcc: MJPG
+    width: 1280
+    height: 720
+    fps: 30
