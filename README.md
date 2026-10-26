@@ -6,7 +6,7 @@
 
 [项目组成](#项目组成) · [一键安装](#一键安装) · [NVIDIA 驱动与 CUDA](#nvidia-驱动和-cuda-128) · [运行入口](#运行入口) · [标定](#标定边界)
 
-## 独立数采包（AMD / CPU）
+## 独立数采包
 
 只使用数采功能时，请进入 [`amd_data_capture/`](amd_data_capture/README.md)，按该目录的说明运行安装脚本。默认 ROS 2 Humble，保留手柄和主从臂两种采集方式，不需要 NVIDIA、CUDA 或 ROCm。
 
