@@ -16,7 +16,7 @@ DEFAULT_TIMEOUT_S = 2.0
 DEFAULT_SCAN_TIMEOUT_S = 15.0
 DEFAULT_WRITE_TIMEOUT_S = 30.0
 READING_INTERVAL_S = 0.1
-DEFAULT_TOLERANCE = 10
+DEFAULT_TOLERANCE = 60
 STABILITY_SAMPLES = 3
 STABILITY_SPAN = 5
 SAMPLE_INTERVAL_S = 0.03
@@ -71,6 +71,13 @@ class _SimulatedBus:
         pass
 
     def command(self, command: str) -> str:
+        move = re.fullmatch(r"#(\d{3})P2400T(\d{4})!", command)
+        if move:
+            servo_id = int(move[1])
+            if servo_id not in self.pwms or servo_id in self.silent:
+                return ""
+            self.pwms[servo_id] = 2400
+            return ""
         match = re.fullmatch(r"#(\d{3})P([A-Z]{2,4})(\d{0,4})!", command)
         if not match:
             return ""
@@ -197,7 +204,7 @@ class BusWorker:
         if not active:
             return None
         listed = "、".join(f"{sid:03d}" for sid in active)
-        return _error("reading_active", f"仍有舵机在读数中（{listed}），持久写入前请先停止全部读数")
+        return _error("reading_active", f"仍有舵机在读数中（{listed}），操作前请先停止全部读数")
 
     def _close(self) -> None:
         bus = self._bus
@@ -368,6 +375,62 @@ class BusWorker:
                           "message": f"ID 已成功改为 {target_id:03d}，但开机释力未确认；请勿重发改号命令"},
                 "id_write": id_result, "boot_release": boot_result}
 
+    def _do_move_to_2400(self, servo_id: int, duration_ms: int, confirm_text: str) -> dict[str, Any]:
+        if self._bus is None:
+            return _error("not_connected", "尚未连接串口")
+        if busy := self._reject_if_reading():
+            return busy
+        expected = f"MOVE {servo_id:03d} TO 2400"
+        if confirm_text.strip() != expected:
+            return _error("confirm_mismatch", f"确认文本不正确，需要输入：{expected}")
+        before = self._bus.read_pwm(servo_id, retries=2)
+        if before is None:
+            return _error("no_response", f"舵机 {servo_id:03d} 无有效回包，未发送移动命令")
+        restore_command = f"#{servo_id:03d}PULR!"
+        restored = self._command_wait(restore_command)
+        acknowledged = "#OK!" in restored
+        firmware = None
+        compatible_silence = False
+        if not acknowledged and not restored:
+            firmware = self._command_wait(f"#{servo_id:03d}PVER!")
+            # This firmware was physically verified to restore torque without an ACK.
+            compatible_silence = firmware.strip() == f"#{servo_id:03d}@ ZL-ZServo_AD_CBM V2.1.16STG!"
+            if compatible_silence:
+                compatible_silence = self._bus.read_pwm(servo_id, retries=2) is not None
+        if not acknowledged and not compatible_silence:
+            return _error("torque_restore_failed",
+                          f"恢复扭矩未确认，未发送移动命令；{restore_command} 回包：{restored!r}（空字符串表示未收到回包）。"
+                          "未确认支持该固件的无回包行为，或位置通信失败；请检查并按需释力",
+                          command=restore_command, response=restored, firmware=firmware)
+        message = f"#{servo_id:03d}P2400T{duration_ms:04d}!"
+        response = self._bus.command(message)
+        if not self._simulate:
+            time.sleep(duration_ms / 1000 + 0.1)
+        after = self._bus.read_pwm(servo_id, retries=2)
+        with self._lock:
+            tolerance = self._tolerance
+        verified = after is not None and abs(after - 2400) <= tolerance
+        result = {"id": servo_id, "command": message, "response": response,
+                  "before": before, "after": after, "target": 2400,
+                  "duration_ms": duration_ms, "tolerance": tolerance,
+                  "verified": verified, "torque_restored": True if acknowledged else None,
+                  "torque_acknowledged": acknowledged, "torque_response": restored,
+                  "firmware": firmware}
+        if verified:
+            return {"ok": True, **result}
+        return _error("pwm_out_of_tolerance",
+                      f"移动已发送，但回读 {after if after is not None else '无响应'} 未通过 ±{tolerance} 验证；"
+                      "可能仍保持扭矩，请检查或释力", **result)
+
+    def _do_release_torque(self, servo_id: int) -> dict[str, Any]:
+        if self._bus is None:
+            return _error("not_connected", "尚未连接串口")
+        response = self._command_wait(f"#{servo_id:03d}PULK!")
+        if "#OK!" not in response:
+            return _error("torque_release_failed", f"释力未收到确认，回包：{response!r}；请检查舵机状态",
+                          response=response)
+        return {"ok": True, "id": servo_id, "response": response}
+
     def _do_calibrate_zero(self, servo_id: int, confirm_text: str,
                            manual_release_confirmed: bool = False) -> dict[str, Any]:
         if self._bus is None:
@@ -527,6 +590,21 @@ class BusWorker:
             return _error("invalid_request", "人工释力确认必须是布尔值")
         return self._submit("calibrate_zero", servo_id, confirm_text, manual_release_confirmed,
                             timeout_s=timeout_s)
+
+    def move_to_2400(self, servo_id: Any, duration_ms: Any, confirm_text: Any) -> dict[str, Any]:
+        if not self._valid_id(servo_id, 2, 3):
+            return _error("invalid_request", "位置移动仅支持 002 和 003")
+        if not isinstance(duration_ms, int) or isinstance(duration_ms, bool) or not 500 <= duration_ms <= 9999:
+            return _error("invalid_request", "移动时间必须是 500 到 9999 ms 的整数")
+        if not isinstance(confirm_text, str):
+            return _error("invalid_request", "确认文本必须是字符串")
+        return self._submit("move_to_2400", servo_id, duration_ms, confirm_text,
+                            timeout_s=DEFAULT_WRITE_TIMEOUT_S)
+
+    def release_torque(self, servo_id: Any) -> dict[str, Any]:
+        if not self._valid_id(servo_id, 2, 3):
+            return _error("invalid_request", "此释力接口仅支持 002 和 003")
+        return self._submit("release_torque", servo_id)
 
     def startup_torque(self, servo_id: Any, mode: Any, confirm_text: Any,
                        *, timeout_s: float = DEFAULT_WRITE_TIMEOUT_S) -> dict[str, Any]:

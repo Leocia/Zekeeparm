@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "colors": {
+    "red": {
+      "hue_center": 1.0,
+      "hue_radius": 4.0
+    },
+    "green": {
+      "hue_center": 82.0,
+      "hue_radius": 4.0
+    },
+    "blue": {
+      "hue_center": 98.0,
+      "hue_radius": 4.0
+    },
+    "purple": {
+      "hue_center": 146.0,
+      "hue_radius": 6.0
+    }
+  },
+  "source_image": "",
+  "samples": [
+    "red:408,600,439,615",
+    "red:400,628,432,653",
+    "red:440,621,451,638",
+    "green:542,624,564,639",
+    "green:530,650,546,670",
+    "green:559,650,579,674",
+    "blue:701,622,737,641",
+    "purple:862,596,889,608",
+    "purple:849,617,867,639",
+    "purple:890,622,906,642"
+  ],
+  "camera_serial": "",
+  "preset_sha256": "46243cde6fa88cca000dcce6dd0b2ab2df902d89983a74e8511f981858b6c1b4"
+}

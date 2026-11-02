@@ -1,150 +1,89 @@
-# Zekeeparm
+# Zekeeparm 源码交付包
 
-六轴机械臂独立运行包，覆盖真机控制、MoveIt、视觉抓取、拖动示教和遥操作。
+目标平台：Ubuntu 22.04 x86_64、ROS 2 Humble、NVIDIA GPU。路径与用户名可变。
+仅含源码、机器人 URDF/STL 等结构资源，以及指定保留的手眼和颜色标定；不含模型权重、训练数据、密钥、虚拟环境或本机编译产物。
 
-**目标平台：** Ubuntu 22.04 x86_64 · ROS 2 Humble · Python 3.10
+## 首次安装
 
-[项目组成](#项目组成) · [一键安装](#一键安装) · [NVIDIA 驱动与 CUDA](#nvidia-驱动和-cuda-128) · [运行入口](#运行入口) · [标定](#标定边界)
+在实际项目根目录运行。若已有 Conda，先指定安装根目录：
 
-## 项目组成
+```bash
+export ZKEEP_MINIFORGE_DIR="$(conda info --base)"
+bash tools/env.sh base bash setup.sh
+```
 
-| 模块 | 功能 |
+没有 Conda 时省略第一行，安装器会安装 Miniforge 到 `~/miniforge3`。
+安装需要网络、`sudo apt` 和足够磁盘空间；不会连接设备、使能电机，也不会安装 NVIDIA 驱动或 CUDA。
+基础安装不下载模型；GraspNet 源码及原生扩展按安装提示选择，未接受许可时跳过。
+GPU 驱动、CUDA 12.8 和具体安装边界见 [安装说明](docs/INSTALL_PORTABLE.md)。
+
+校验收到的原始交付包：
+
+```bash
+sha256sum -c MANIFEST.sha256
+python3 -B tools/check_delivery.py
+```
+
+清单只针对未安装、未填写设备配置的交付快照；修改或安装后产生差异是正常现象。
+
+## 新设备配置与标定
+
+本次部署使用同型号的新机械臂和新相机，**原设备身份不沿用**。
+
+1. 在 `src/zekeep_grasp/config/default.yaml` 填写新的 `camera.serial`、`robot.id`、`calibration.installation_id`。
+2. 核对串口、方向、零位、夹爪行程、TCP 和桌面几何。硬件 YAML 的运动授权与监督重力试验授权默认关闭，配置中的经验力矩修正恢复为 1；现场核验后再明确开启。
+3. 只接相机，通过 SDK 保存新设备当前图像配置的内参：
+
+   ```bash
+   bash tools/env.sh vision python src/zekeep_grasp/scripts/read_camera_serial.py
+   bash tools/env.sh vision python src/zekeep_grasp/scripts/save_orbbec_intrinsics.py
+   ```
+
+4. 手眼与颜色标定按要求保留，**保留文件不代表新安装已经验证**。新机安装位置、曝光或光照变化时先核验，必要时重新标定。
+5. 若使用遥操作，重新填写主从设备 ID 并完成设备零位标定；若使用 ACT/VLA，选择新的全局相机路径并填写 `record.yaml` 的安装标识和工作区域，核验后将 `workspace.confirmed` 设为 `true`。
+
+自动标定姿态也提供空模板，须按新现场生成并验证后使用。独立 SDK 抓取入口执行完整抓取放置循环，未现场确认 `place.enabled` 时拒绝启动。固定放置功能默认关闭；源代码的放置点与工作台尺寸仅为待现场核对的参考值。
+
+## 模型按需下载
+
+```bash
+# YOLOE 与 MobileCLIP：带 SHA-256 校验，可重复执行。
+bash tools/download_models.sh base
+# 先阅读许可，并在 setup.sh 中选择安装 GraspNet 依赖后：
+ACCEPT_GRASPNET_LICENSE=YES bash tools/download_models.sh graspnet
+```
+
+π0.5 基础权重、tokenizer、ACT 用户模型及训练结果按[选装说明](docs/OPTIONAL_MODULES.md)单独准备。
+也可在首次安装时显式设置 `ZKEEP_DOWNLOAD_MODELS=1` 下载所选视觉模块权重。
+下载脚本不连接相机或机械臂。
+
+## 功能与入口
+
+| 功能 | 模块 / 入口 |
 | --- | --- |
-| `zekeep_bringup` | 模型、硬件参数、真机、RViz 和网页启动 |
-| `zekeepcontroller` | 硬件抽象、状态机、ROS 服务和轨迹 Action |
-| `zekeep_msgs` | 自定义消息、服务和 Action |
-| `zekeep_moveit_config` | MoveIt 配置 |
-| `zekeep_teach` | 重力补偿拖动示教和轨迹复现 |
-| `zekeep_joystick` | 六轴关节及末端手柄控制 |
-| `rebot_grasp` | 相机、当前标定、检测和抓取 |
-| `zekeep_teleop` | 独立 LeRobot 主从遥操作 |
-| `zekeeparm_SDK` | 机械臂 SDK，仅保留 DM 硬件配置 |
-
-GraspNet 源码由安装者接受许可限制后从官方仓库获取，不随本仓库分发。
-
-包含已有检查脚本。不包含语言控制、具身学习、数据采集模块、模型权重、日志、缓存和构建产物。
-
-## 一键安装
-
-> [!IMPORTANT]
-> 安装需联网，脚本会使用 `sudo apt`。NVIDIA 驱动和 CUDA Toolkit 需按[下方步骤](#nvidia-驱动和-cuda-128)单独安装。脚本不会连接相机或机械臂，也不会使能电机。
+| 驱动、MoveIt、网页 | `zekeepcontroller`、`zekeep_bringup`、`zekeep_moveit_config` |
+| 视觉抓取、跟随、LLM | `zekeep_grasp`、`zekeep_shadow`、`zekeep_llm` |
+| 示教、手柄、遥操作 | `zekeep_teach`、`zekeep_joystick`、`zekeep_teleop` |
+| 共用数采 | `tools/collect.sh` |
+| ACT、π0.5（选装） | `tools/act.sh`、`tools/pi05-model.sh`；兼容 `tools/pi05.sh` |
+| ROS MuJoCo（选装） | `zekeep_sim`，独立命名空间 `/zekeep_sim` |
+| 独立网页仿真（选装） | `web_mujoco/`，不依赖真机或 ROS |
+| 积木编程 Studio（选装） | `apps/studio/` |
+| 底层 SDK | `zekeeparm_SDK/` |
 
 ```bash
-git clone https://github.com/leo66600/Zekeeparm.git "$HOME/Desktop/Zekeeparm"
-cd "$HOME/Desktop/Zekeeparm"
-bash setup.sh
+# ROS 环境；以下 demo 使用模拟关节，不连接真机。
+bash tools/env.sh ros ros2 launch zekeep_moveit_config demo.launch.py
+# 网页与只读 AI 后端，不启动机械臂驱动或相机。
+bash tools/env.sh ros ros2 launch zekeep_bringup web.launch.py
+# 保留原交付入口；--preview 不启动真机驱动，仍打开相机和视觉。
+./tools/start_web_sim.sh --preview
 ```
 
-脚本安装 ROS、SDK、视觉环境和 LeRobot 遥操作环境，并下载视觉模型权重。中断后可直接重跑。
+网页默认 `http://127.0.0.1:3001`。`start_web_sim.sh` 是原网页控制台的历史入口名；独立 MuJoCo 仿真见选装说明。
+真机 SDK、ROS、遥操作不能同时占用同一机械臂串口。所有运动都需要新设备现场配置、标定及人工授权。
 
-脚本未找到 CUDA 12.8 或可见 NVIDIA GPU 时，会跳过 GraspNet 原生扩展。完成下方 GPU 安装后重跑 `bash setup.sh`。
+环境入口：`bash tools/env.sh ros|vision|teleop|vla|model|act|studio [命令]`。
+`vla` 用于数采，`model` 与 `act` 均选择共用 LeRobot `act` 环境。完整安装与操作见各模块 README。
 
-### GraspNet 下载和编译
-
-运行 `bash setup.sh` 时，脚本会询问是否获取 GraspNet。确认仅用于本人或同机构内部非商业研究并输入 `YES` 后，脚本自动：
-
-- 克隆 `graspnet-baseline` 和 `graspnetAPI` 源码；
-- 下载 `checkpoint-rs.tar` 模型权重；
-- 在当前 GPU 上编译 `pointnet2` 和 `knn` CUDA 扩展。
-
-不输入 `YES` 时，脚本跳过 GraspNet 源码、权重和原生扩展。基础 ROS、仿真和其他功能仍可安装，视觉抓取无法运行。已存在且校验通过的文件不会重复下载。
-
-## NVIDIA 驱动和 CUDA 12.8
-
-先查看 Ubuntu 推荐驱动，再由用户确认安装：
-
-```bash
-sudo apt update
-sudo apt install -y ubuntu-drivers-common
-ubuntu-drivers devices
-sudo ubuntu-drivers install
-sudo reboot
-```
-
-重启后确认驱动：
-
-```bash
-nvidia-smi
-```
-
-安装 CUDA Toolkit 12.8，不使用 `cuda` 元包，避免由该命令主动安装驱动：
-
-```bash
-cd /tmp
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-sudo apt update
-sudo apt install -y cuda-toolkit-12-8
-```
-
-设置当前终端并重跑安装脚本：
-
-```bash
-export CUDA_HOME=/usr/local/cuda-12.8
-export PATH="$CUDA_HOME/bin:$PATH"
-cd "$HOME/Desktop/Zekeeparm"
-bash setup.sh
-```
-
-## 运行入口
-
-### ROS、RViz、网页、手柄和示教
-
-```bash
-cd "$HOME/Desktop/Zekeeparm"
-source tools/activate_ros.sh
-```
-
-无硬件 RViz：
-
-```bash
-ros2 launch zekeep_moveit_config demo.launch.py
-```
-
-网页：
-
-```bash
-ros2 launch zekeep_bringup web.launch.py
-```
-
-### 视觉抓取
-
-```bash
-source "$HOME/miniforge3/etc/profile.d/conda.sh" 2>/dev/null || \
-  source "$HOME/miniconda3/etc/profile.d/conda.sh"
-conda activate rebotarm
-cd "$HOME/Desktop/Zekeeparm/src/rebot_grasp"
-```
-
-### 主从遥操作
-
-```bash
-source "$HOME/miniforge3/etc/profile.d/conda.sh" 2>/dev/null || \
-  source "$HOME/miniconda3/etc/profile.d/conda.sh"
-conda activate lerobot
-cd "$HOME/Desktop/Zekeeparm/src/zekeep_teleop"
-```
-
-## 标定边界
-
-包含当前 `intrinsics.npz` 和 `hand_eye.npz`，不包含本地设备身份记录或标定历史备份。这些标定不能证明目标电脑或现场已经验证。设备、安装位置或场景变化后必须重新标定；完全未变化时也应先执行相机身份确认：
-
-```bash
-conda activate rebotarm
-cd "$HOME/Desktop/Zekeeparm"
-python src/rebot_grasp/scripts/confirm_calibration.py \
-  --config src/rebot_grasp/config/default.yaml --confirm-same-installation
-```
-
-公开仓库的 `config/default.yaml` 中设备身份字段留空。确认前请在 `src/rebot_grasp/config/default.yaml` 填写实际 `camera.serial`、`robot.id` 和 `calibration.installation_id`。
-
-该命令只打开相机，不连接或使能机械臂。完整硬件安全说明见[视觉抓取说明](src/rebot_grasp/README.md)等各包 README。
-
-## 许可
-
-本工作区仅供本人或同一机构内部非商业研究，不得用于商业用途或向第三方转让、分发。GraspNet 源码与权重另受其使用许可限制；定制 SDK 按适用许可条款使用。
-
-## 安全提示
-
-> [!WARNING]
-> 安装脚本不会安装或更换 NVIDIA 驱动，不会自动连接相机或机械臂，也不会使能电机。真机启动前先检查急停、工作空间、速度与碰撞边界。操作者需为设备运行及由此产生的损害负责。
+接口见 [ROS API](API_zh.md)，第三方来源见 [许可说明](docs/THIRD_PARTY_NOTICES.md)。

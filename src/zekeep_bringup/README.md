@@ -14,12 +14,12 @@ source "$ZKEEP_WS/tools/activate_ros.sh"
 来源于 0918 CAD，已删除 `rod_left_link`、`rod_right_link` 及对应网格。
 夹爪使用 `gripper_base`、`left_link`、`right_link`，右指 mimic 左指。
 
-ROS、视觉 SDK 和网页范围：J1 `[-2.58, 2.58] rad`，J2/J3 `[0, 3.7] rad`，
+ROS、视觉 SDK 和网页范围：J1 `[-2.58, 2.58] rad`，J2 `[0, 3.7] rad`、J3 `[-0.01, 3.7] rad`，
 J4–J6 `[-1.57, 1.57] rad`。ROS/视觉电机到模型的六轴方向均为 `-1`。
 独立 LeRobot 遥操作保留原有角度制标定，不套用这组方向。
 当前 joint6 零位法兰相对旧坐标系绕 joint6 自身轴增加 `+90°`，两份 URDF 已同步。
 因此准备位 TCP 姿态的 roll 已重新计算；准备位关节值和限位不变。
-当前手眼标定已完成；仅换电脑且设备、安装、场景未变时可沿用，见[视觉说明](../rebot_grasp/README.md)。
+当前手眼标定已完成；仅换电脑且设备、安装、场景未变时可沿用，见[视觉说明](../zekeep_grasp/README.md)。
 
 标准配置 `config/zekeep_hardware.yaml` 使用 `posvel` 控制，
 `motion_authorized=true`、`supervised_trial_authorized=true`，启动默认不使能。

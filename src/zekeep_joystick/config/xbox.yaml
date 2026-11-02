@@ -5,10 +5,17 @@ zekeep_joystick:
     # Xbox/Linux: LX, LY, RY, RX, D-pad X, D-pad Y.
     axis_indices: [0, 1, 4, 3, 6, 7]
     axis_signs: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    max_speeds: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+    max_speeds: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
     deadman_button: 4  # LB，仅为运动许可，不会使能电机。
     close_button: 0   # A
     open_button: 1    # B
+    gripper_open_axis: 2   # LT
+    gripper_close_axis: 5  # RT
+    gripper_speed: 0.575
+    gripper_open_position: 1.15
+    gripper_close_position: 0.0
+    safe_home_button: 2  # X，单按回安全零位，需要 MoveIt。
+    return_ready_modifier_button: 5  # RB，先按住再按 X 回准备位，需要 MoveIt。
     deadzone: 0.12
     publish_rate: 50.0
     joy_timeout: 0.3

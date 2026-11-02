@@ -19,6 +19,7 @@ from zekeep_msgs.action import GripperGrasp
 from zekeep_msgs.srv import GripperCommand, MoveToPoseIK
 
 from .mapping import integrate_cartesian_pose, integrate_positions, joint_velocities
+from .gripper_jog import GripperJog
 
 
 class CartesianJoystickController(Node):
@@ -35,16 +36,17 @@ class CartesianJoystickController(Node):
             # X, Y, Z, roll, pitch, yaw: LY, LX, RY, D-pad Y, D-pad X, RX.
             "axis_indices": [1, 0, 3, 7, 6, 2],
             "axis_signs": [1.0] * 6,
-            "max_speeds": [0.04, 0.04, 0.04, 0.25, 0.25, 0.25],
+            "max_speeds": [0.04, 0.04, 0.04, 0.5, 0.5, 0.5],
             "joint_axis_indices": [0, 1, 3, 2, 6, 7],
             "joint_axis_signs": [-1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            "joint_max_speeds": [0.25] * 6,
+            "joint_max_speeds": [0.5] * 6,
             "joint_lower_limits": [-2.58, 0.0, 0.0, -1.57, -1.57, -1.57],
             "joint_upper_limits": [2.58, 3.7, 3.7, 1.57, 1.57, 1.57],
             "deadman_button": 6,
             "close_button": 0,
             "open_button": 1,
             "safe_home_button": 3,
+            "return_ready_modifier_button": 7,
             "joint_mode_button": 2,
             "deadzone": 0.12,
             "publish_rate": 15.0,
@@ -75,6 +77,7 @@ class CartesianJoystickController(Node):
         self.close_button = int(value("close_button"))
         self.open_button = int(value("open_button"))
         self.safe_home_button = int(value("safe_home_button"))
+        self.return_ready_modifier_button = int(value("return_ready_modifier_button"))
         self.joint_mode_button = int(value("joint_mode_button"))
         self.deadzone = float(value("deadzone"))
         self.publish_rate = float(value("publish_rate"))
@@ -87,12 +90,14 @@ class CartesianJoystickController(Node):
         self._validate_parameters()
 
         root = f"/{self.namespace}"
+        self.gripper_jog = GripperJog(self, root, self.publish_rate, self.joy_timeout)
         self.publisher = self.create_publisher(
             JointTrajectory, root + "/servo_joint_trajectory", 10
         )
         self.start_client = self.create_client(Trigger, root + "/servo/start")
         self.stop_client = self.create_client(Trigger, root + "/servo/stop")
         self.safe_home_client = self.create_client(Trigger, root + "/safe_home")
+        self.return_ready_client = self.create_client(Trigger, root + "/return_ready")
         self.ik_client = self.create_client(MoveToPoseIK, root + "/move_to_pose_ik")
         self.open_client = self.create_client(GripperCommand, root + "/gripper/open")
         self.close_client = ActionClient(self, GripperGrasp, root + "/gripper/grasp")
@@ -117,6 +122,7 @@ class CartesianJoystickController(Node):
         self.last_feedback_time = 0.0
         self.last_tick = time.monotonic()
         self.ik_pending = False
+        self.ik_solution: list[float] | None = None
         self.control_mode = "cartesian"
         self.state = "idle"
         self.pending_after_stop = None
@@ -127,6 +133,11 @@ class CartesianJoystickController(Node):
         )
 
     def _validate_parameters(self) -> None:
+        if self.return_ready_modifier_button < 0 or self.return_ready_modifier_button in {
+            self.deadman_button, self.close_button, self.open_button,
+            self.safe_home_button, self.joint_mode_button,
+        }:
+            raise ValueError("return_ready_modifier_button must be an unused nonnegative button index")
         vectors = (
             self.joint_names, self.axis_indices, self.axis_signs, self.max_speeds,
             self.joint_axis_indices, self.joint_axis_signs, self.joint_max_speeds,
@@ -164,7 +175,14 @@ class CartesianJoystickController(Node):
         if not deadman:
             self.require_deadman_release = False
         if self._rising(previous, self.safe_home_button):
-            self._request_operation(self._safe_home, "before safe_home")
+            if self._button(self.return_ready_modifier_button):
+                self._request_operation(
+                    self._return_pose, "before return_ready", self.return_ready_client, "return_ready"
+                )
+            else:
+                self._request_operation(
+                    self._return_pose, "before safe_home", self.safe_home_client, "safe_home"
+                )
         elif deadman:
             if self._rising(previous, self.joint_mode_button):
                 self._request_operation(self._switch_to_joint_mode, "before joint mode")
@@ -221,21 +239,39 @@ class CartesianJoystickController(Node):
         if self.state != "active" or self.axes is None or self.target_joints is None:
             self.last_tick = now
             return
+        try:
+            self.gripper_jog.update(self.axes, now)
+        except ValueError as exc:
+            self._stop(str(exc))
+            return
         if self.control_mode == "joint":
             self._tick_joint(now)
             return
         if self.target_pose is None:
             self.last_tick = now
             return
-        self._publish_joint_target(self.target_joints, [0.0] * 6)
+        dt = max(0.0, min(now - self.last_tick, 2.0 / self.publish_rate))
+        self.last_tick = now
+        if self.ik_solution is not None:
+            delta = [value - old for value, old in zip(self.ik_solution, self.target_joints)]
+            distance = max(abs(value) for value in delta)
+            scale = min(1.0, self.max_joint_speed * dt / distance) if distance else 1.0
+            self.target_joints = [old + value * scale for old, value in zip(self.target_joints, delta)]
+            velocities = [value * scale / dt if dt else 0.0 for value in delta]
+            self._publish_joint_target(self.target_joints, velocities)
+            if scale == 1.0:
+                self.target_pose = self.pending_pose
+                self.pending_pose = self.ik_solution = None
+            else:
+                return
+        else:
+            self._publish_joint_target(self.target_joints, [0.0] * 6)
         if self.ik_pending:
             return
         if len(self.axes) <= max(self.axis_indices):
             self._stop("Joy message has too few axes")
             return
 
-        dt = min(now - self.last_tick, 2.0 / self.publish_rate)
-        self.last_tick = now
         velocities = joint_velocities(
             self.axes, self.axis_indices, self.axis_signs,
             self.max_speeds, self.deadzone,
@@ -298,6 +334,7 @@ class CartesianJoystickController(Node):
             if not response.success:
                 raise RuntimeError(response.message)
             self.target_joints = list(self.feedback)
+            self.gripper_jog.reset()
             self.last_tick = time.monotonic()
             self.state = "active"
             self.get_logger().info(f"{self.control_mode} joystick control active")
@@ -320,17 +357,10 @@ class CartesianJoystickController(Node):
             delta = [value - old for value, old in zip(solution, self.target_joints)]
             if max(abs(value) for value in delta) > self.max_joint_step:
                 raise RuntimeError("IK solution exceeds max_joint_step")
-            period = 1.0 / self.publish_rate
-            velocities = [
-                max(-self.max_joint_speed, min(self.max_joint_speed, value / period))
-                for value in delta
-            ]
-            self._publish_joint_target(solution, velocities)
-            self.target_joints = solution
-            self.target_pose = self.pending_pose
+            # POS_VEL uses position targets, so limit their increments in _tick too.
+            self.ik_solution = solution
         except Exception as exc:
             self._warn(f"Cartesian target rejected: {exc}")
-        finally:
             self.pending_pose = None
 
     def _publish_joint_target(
@@ -341,12 +371,14 @@ class CartesianJoystickController(Node):
         point = JointTrajectoryPoint()
         point.positions = positions
         point.velocities = velocities
+        self.gripper_jog.append(message, point)
         message.points = [point]
         self.publisher.publish(message)
 
     def _stop(self, reason: str) -> None:
         self.state = "stopping"
         self.ik_pending = False
+        self.ik_solution = None
         self.pending_pose = None
         if not self.stop_client.service_is_ready():
             self.pending_after_stop = None
@@ -394,35 +426,36 @@ class CartesianJoystickController(Node):
         self.control_mode = "joint"
         self.target_pose = self.pending_pose = None
         self.ik_pending = False
+        self.ik_solution = None
         self.require_deadman_release = True
         self.get_logger().info("joint position control selected; release LB, then hold LB to move")
 
-    def _safe_home(self) -> None:
-        if not self.safe_home_client.service_is_ready():
+    def _return_pose(self, client, operation: str) -> None:
+        if not client.service_is_ready():
             self.require_deadman_release = True
-            self.get_logger().warn("safe_home unavailable")
+            self.get_logger().warn(f"{operation} unavailable")
             return
-        self.state = "safe_home"
+        self.state = operation
         self.require_deadman_release = True
         try:
-            self.safe_home_client.call_async(Trigger.Request()).add_done_callback(
-                self._on_safe_home
+            client.call_async(Trigger.Request()).add_done_callback(
+                lambda future: self._on_returned(future, operation)
             )
-            self.get_logger().info("safe_home requested; waiting for collision-checked motion")
+            self.get_logger().info(f"{operation} requested; waiting for collision-checked motion")
         except Exception as exc:
             self.state = "idle"
-            self.get_logger().error(f"safe_home request failed: {exc}")
+            self.get_logger().error(f"{operation} request failed: {exc}")
 
-    def _on_safe_home(self, future) -> None:
+    def _on_returned(self, future, operation: str) -> None:
         self.state = "idle"
         self.require_deadman_release = True
         try:
             response = future.result()
             if not response.success:
                 raise RuntimeError(response.message)
-            self.get_logger().info("safe_home complete; release LB before control")
+            self.get_logger().info(f"{operation} complete; release LB before control")
         except Exception as exc:
-            self.get_logger().error(f"safe_home failed: {exc}")
+            self.get_logger().error(f"{operation} failed: {exc}")
 
     def _command_gripper(self, client, label: str) -> None:
         if label == "close":

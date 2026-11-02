@@ -1,0 +1,10 @@
+# Empty detection_id places the object already held by this backend.
+string detection_id
+# Exactly one destination: a configured named joint target or a detected block.
+string target_name
+string support_detection_id
+---
+bool success
+string message
+---
+string phase

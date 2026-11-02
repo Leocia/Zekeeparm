@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from contextlib import ExitStack
 import time
 import threading
+import math
 
 from rclpy.node import Node
 from std_srvs.srv import Trigger
@@ -22,13 +24,20 @@ class ServoStream:
         self.last_command = None
         self._lock = threading.Lock()
         root = f"/{namespace}/servo"
-        self.start_service = node.create_service(Trigger, root + "/start", self.start)
+        self.start_service = node.create_service(Trigger, root + "/start", node.web_task_gate.service(self.start))
+        self.start_gripper_service = node.create_service(
+            Trigger, root + "/start_with_gripper", node.web_task_gate.service(self.start_with_gripper))
+        self.start_grasp_service = node.create_service(
+            Trigger, root + "/start_with_gripper_grasp", node.web_task_gate.service(self.start_with_gripper_grasp))
         self.stop_service = node.create_service(Trigger, root + "/stop", self.stop)
         self.require_mit_service = node.create_service(
-            Trigger, root + "/require_mit", self.require_mit
+            Trigger, root + "/require_mit", node.web_task_gate.service(self.require_mit)
         )
         self.require_posvel_service = node.create_service(
-            Trigger, root + "/require_posvel", self.require_posvel
+            Trigger, root + "/require_posvel", node.web_task_gate.service(self.require_posvel)
+        )
+        self.require_gripper_service = node.create_service(
+            Trigger, root + "/require_gripper_stream", node.web_task_gate.service(self.require_gripper_stream)
         )
         self.subscription = node.create_subscription(
             JointTrajectory,
@@ -40,10 +49,34 @@ class ServoStream:
         self.timer = node.create_timer(0.02, self.watchdog, callback_group=node.reentrant_group)
 
     def start(self, _request, response):
+        return self._start(response, with_gripper=False)
+
+    def start_with_gripper(self, _request, response):
+        return self._start(response, with_gripper=True)
+
+    def start_with_gripper_grasp(self, _request, response):
+        return self._start(response, with_gripper=True, gripper_grasp=True)
+
+    def _start(self, response, *, with_gripper, gripper_grasp=False):
         with self._lock:
             try:
-                self.hardware.begin_servo_stream()
+                if with_gripper:
+                    with ExitStack() as locks:
+                        for name in ("arm_actions", "task_actions"):
+                            actions = getattr(self.node, name, None)
+                            if actions is not None:
+                                lock = actions._gripper_execution_lock
+                                if not lock.acquire(blocking=False):
+                                    raise RuntimeError("another gripper action is active")
+                                locks.callback(lock.release)
+                        if gripper_grasp:
+                            self.hardware.begin_servo_stream(with_gripper=True, gripper_grasp=True)
+                        else:
+                            self.hardware.begin_servo_stream(with_gripper=True)
+                else:
+                    self.hardware.begin_servo_stream()
                 self.last_command = time.monotonic()
+                self.node.publish_arm_status(read_hardware=False)
                 response.success, response.message = True, "servo stream started"
             except Exception as exc:
                 response.success, response.message = False, str(exc)
@@ -65,10 +98,16 @@ class ServoStream:
         )
         return response
 
+    def require_gripper_stream(self, _request, response):
+        response.success = self.hardware.has_gripper
+        response.message = "seven-joint servo with gripper watchdog" if response.success else "gripper unavailable"
+        return response
+
     def stop(self, _request, response):
         with self._lock:
             self.hardware.stop_servo_stream()
             self.last_command = None
+            self.node.publish_arm_status(read_hardware=False)
         response.success, response.message = True, "servo stream stopped; holding position"
         return response
 
@@ -78,17 +117,26 @@ class ServoStream:
                 return
             try:
                 # A single point replaces the prior servo target immediately.
-                if len(msg.points) != 1 or len(msg.joint_names) != len(self.names):
-                    raise ValueError("servo command must contain one point for six joints")
-                if len(set(msg.joint_names)) != len(self.names) or set(msg.joint_names) != set(self.names):
+                with_gripper = set(msg.joint_names) == set(self.names) | {"gripper"}
+                expected = self.names + (("gripper",) if with_gripper else ())
+                if len(msg.points) != 1 or len(msg.joint_names) != len(expected):
+                    raise ValueError("servo command requires all six arm joints and optional gripper")
+                if len(set(msg.joint_names)) != len(expected) or set(msg.joint_names) != set(expected):
                     raise ValueError("servo command joint names do not match arm")
                 point = msg.points[0]
-                if len(point.positions) != len(self.names) or len(point.velocities) != len(self.names):
-                    raise ValueError("servo point must contain six positions and velocities")
+                if len(point.positions) != len(expected) or len(point.velocities) != len(expected):
+                    raise ValueError("servo point dimensions do not match joint names")
                 by_name = {name: i for i, name in enumerate(msg.joint_names)}
                 positions = [point.positions[by_name[name]] for name in self.names]
                 velocities = [point.velocities[by_name[name]] for name in self.names]
-                self.hardware.set_servo_target(positions, velocities)
+                if with_gripper:
+                    if not math.isfinite(point.velocities[by_name["gripper"]]):
+                        raise ValueError("non-finite gripper velocity")
+                    self.hardware.set_servo_target(
+                        positions, velocities, gripper_position=point.positions[by_name["gripper"]]
+                    )
+                else:
+                    self.hardware.set_servo_target(positions, velocities)
                 self.last_command = time.monotonic()
             except RuntimeError as exc:
                 if (str(exc) == "servo command received while servo stream is inactive"
@@ -103,6 +151,7 @@ class ServoStream:
         self.node.get_logger().error(f"servo command rejected; holding: {exc}")
         self.hardware.stop_servo_stream()
         self.last_command = None
+        self.node.publish_arm_status(read_hardware=False)
 
     def watchdog(self):
         with self._lock:
@@ -111,3 +160,4 @@ class ServoStream:
                 self.node.get_logger().error("servo command timeout; holding arm")
                 self.hardware.stop_servo_stream()
                 self.last_command = None
+                self.node.publish_arm_status(read_hardware=False)

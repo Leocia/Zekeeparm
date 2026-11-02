@@ -1,0 +1,11 @@
+# New-device template. Generate and validate poses against this installation
+# before automatic calibration; no old device trajectory is authorized here.
+base_frame: base_link
+reference_frame: gripper_base
+position_unit: meter
+angle_unit: radian
+euler_convention: intrinsic_zyx_rpy
+validated_start_joint_positions: []
+start_tolerance_rad: 0.05
+move_duration_s: 8.0
+poses: []

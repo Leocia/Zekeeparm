@@ -1,0 +1,10 @@
+# Shared ACT/pi0.5 environment; PyTorch CUDA wheels are installed separately.
+lerobot==0.4.4
+# Official LeRobot v0.4.4 pi extra, fixed to a reproducible commit.
+transformers @ https://github.com/huggingface/transformers/archive/dcddb970176382c0fcf4521b0c0e6fc15894dfe0.zip
+numpy==2.2.6
+av==15.1.0
+torch==2.7.1
+torchvision==0.22.1
+torchcodec==0.3.0
+scipy>=1.10.1,<1.15

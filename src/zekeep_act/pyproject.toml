@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=71"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zekeep-act"
+version = "0.1.0"
+description = "ROS joystick/leader demonstrations and local ACT training for Zekeep"
+requires-python = ">=3.10,<3.13"
+dependencies = ["zekeep-embodied", "lerobot==0.4.4"]
+
+[project.scripts]
+zekeep-act = "zekeep_act.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

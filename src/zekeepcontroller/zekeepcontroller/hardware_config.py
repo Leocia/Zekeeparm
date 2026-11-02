@@ -8,10 +8,21 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from ament_index_python.packages import (
-    PackageNotFoundError,
-    get_package_share_directory,
-)
+try:
+    from ament_index_python.packages import (
+        PackageNotFoundError,
+        get_package_share_directory,
+    )
+except ModuleNotFoundError as exc:
+    if exc.name not in ("ament_index_python", "ament_index_python.packages"):
+        raise
+
+    class PackageNotFoundError(LookupError):
+        pass
+
+    def get_package_share_directory(name):
+        # Standalone Studio resolves the same models from the source bundle.
+        raise PackageNotFoundError(name)
 
 
 def resolve_hardware_config(

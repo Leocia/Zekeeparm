@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Zekeeparm Studio · 积木编程</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/studio.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><span class="brand-mark">Z</span><div><strong>Zekeeparm <span>Studio</span></strong><small>六轴机械臂 · 本地编程工作台</small></div></div>
+    <div class="project-tools"><input id="project-name" aria-label="项目名称" value="我的第一个程序" maxlength="80"><button id="save-project">保存</button><button id="open-project">打开</button><button id="export-project">导出</button><button id="import-project">导入</button><input type="file" id="import-file" accept=".json,application/json" hidden></div>
+    <span class="service-state" id="service-state" role="status">正在连接本机服务</span>
+  </header>
+  <main class="workbench">
+    <section class="editor-panel" aria-label="积木编程">
+      <div class="panel-heading"><div><span class="eyebrow">PROGRAM</span><h1>积木编程</h1></div><div class="editor-actions"><button id="edit-python" aria-label="编辑 Python 代码">Python</button><button id="example">载入示例</button><button id="new-project">新建</button></div></div>
+      <div class="run-toolbar"><div class="button-group"><button id="check-program">检查程序</button><button id="preview-program">▶ 预览</button><button id="run-program" class="primary">▶ 运行</button></div><button id="stop-program" class="danger">■ 停止</button></div>
+      <div id="program-error" role="alert" hidden><div><strong>程序检查未通过</strong><p id="program-error-text"></p><p id="program-error-hint"></p></div><button id="locate-error">定位积木</button></div>
+      <div id="blockly" aria-label="拖拽积木工作区"></div>
+      <div class="editor-footer"><span id="program-info">从左侧选择积木，连接到「开始」下方</span><span>Ctrl / ⌘ + S 保存</span></div>
+    </section>
+    <div id="resize-handle" class="resize-handle" role="separator" aria-label="调整右侧面板宽度" aria-orientation="vertical" aria-valuemin="320" aria-valuemax="680" aria-valuenow="360" tabindex="0"></div>
+    <aside class="inspector" aria-label="机械臂与示教">
+      <section class="preview-panel">
+        <div class="preview-heading"><span>机械臂预览</span><span id="view-mode">滑块目标姿态</span><button id="zoom-out" title="缩小模型" aria-label="缩小模型">−</button><button id="zoom-in" title="放大模型" aria-label="放大模型">＋</button><button id="expand-preview" title="放大预览窗口" aria-label="放大预览窗口">⛶</button><button id="reset-view" title="重置视角" aria-label="重置视角">↺</button></div>
+        <div id="scene" class="robot-scene" aria-label="机械臂姿态预览"><p id="model-status" class="model-status">正在加载机械臂模型…</p></div>
+        <div id="joint-state-strip" class="joint-state-strip"><span id="joint-state-label">关节实时状态 · °</span><div id="joint-state" class="joint-state" aria-label="各关节实时角度"></div></div>
+        <div class="fullscreen-controls" aria-label="全屏关节控制">
+          <div id="fullscreen-sliders" class="fullscreen-sliders"></div>
+          <div class="fullscreen-actions"><button id="fullscreen-move" class="primary">移动到目标</button><button id="fullscreen-run" class="primary">▶ 运行积木</button></div>
+        </div>
+      </section>
+      <div class="inspector-content">
+        <section class="device-panel"><div class="section-title"><h2>设备连接</h2><span id="device-status" class="badge">未连接</span></div>
+          <div class="device-fields"><select id="device-mode" aria-label="设备模式"><option value="simulation">模拟设备</option><option value="sdk">真机 · USB 串口</option></select><input id="device-channel" aria-label="串口名称" placeholder="COM3" value="COM3" hidden><button id="connect-device">连接</button></div>
+          <div class="device-footer"><span id="device-hint">模拟设备可体验完整编程流程</span><button id="enable-device" disabled>使能</button><button id="disable-device" class="danger" title="失能会释放电机力矩，请先支撑机械臂" disabled>失能</button></div>
+        </section>
+        <section><div class="section-title"><h2>关节目标</h2><button id="read-joints">读取当前位置</button></div>
+          <div id="joint-controls" class="joint-controls"></div>
+          <div class="opening-control"><label for="opening">夹爪开口 <small>mm</small></label><input id="opening" type="number" min="0" max="65.17241379310346" step="1" value="40"><button id="move-gripper">设置夹爪</button></div>
+          <div class="motion-actions"><label>时长 <input id="duration" type="number" min="0.2" max="60" step="0.5" value="2"> s</label><button id="add-move">＋ 插入积木</button><button id="move-joints" class="primary">移动到目标</button></div>
+        </section>
+        <section><div class="section-title"><h2>示教点</h2><span id="point-count" class="muted">0 个位置</span></div>
+          <div class="point-create"><input id="point-name" placeholder="位置名称，例如：取料上方" aria-label="示教点名称" maxlength="60"><button id="capture-point">记录当前</button></div>
+          <div id="point-list" class="point-list"><p class="empty">移动机械臂后记录位置，再把位置插入程序。</p></div>
+        </section>
+        <details class="pose-panel"><summary>位姿与逆运动学 <span>XYZ + RPY</span></summary><p class="hint">TCP：official_tcp；位置相对 base_link。求解只更新目标，不发送运动。</p><div id="pose-fields" class="pose-fields"></div><div class="pose-actions"><button id="read-pose">读取目标位姿</button><button id="solve-ik">求解关节角</button></div></details>
+      </div>
+      <details id="log-panel"><summary><span>运行日志</span><button id="clear-log" type="button" aria-label="清空日志">清空</button></summary><div id="log-content" role="log" aria-label="运行日志内容" tabindex="0">暂无运行记录</div></details>
+    </aside>
+  </main>
+  <footer class="statusbar"><div class="status-message" id="message" role="status" aria-live="polite">准备就绪。连接模拟设备，或直接预览示例程序。</div><span id="progress">等待执行</span></footer>
+  <dialog id="project-dialog"><form method="dialog"><h2>打开本机项目</h2><select id="project-list" aria-label="已保存的项目" size="7"></select><div><button value="cancel">取消</button><button id="load-project" value="default" class="primary">打开项目</button></div></form></dialog>
+  <dialog id="python-dialog"><form method="dialog"><h2>Python 计算块</h2><p class="hint">variables 是程序变量字典，joints 是关节角列表（rad）。给 result 赋值，结果会保存到下方指定的变量。Python 下标从 0 开始。</p><label for="python-result">结果变量</label><input id="python-result" maxlength="60" value="Python结果"><label for="python-code">Python 代码</label><textarea id="python-code" rows="14" maxlength="8192" spellcheck="false" wrap="off"></textarea><p class="hint">支持赋值、if、for、列表推导式、math 和 print。最多 10000 步 / 2 秒。Tab 缩进，Ctrl + Enter 保存，Esc 取消。</p><p id="python-editor-error" role="alert"></p><div><button value="cancel">取消</button><button id="save-python" class="primary">保存代码</button></div></form></dialog>
+  <script src="/vendor/blockly/blockly_compressed.js"></script>
+  <script src="/vendor/blockly/msg/zh-hans.js"></script>
+  <script src="/lib/three-r128.min.js"></script>
+  <script src="/lib/STLLoader-umd.js"></script>
+  <script src="/lib/URDFLoader.js"></script>
+  <script src="/scene.js"></script>
+  <script src="/blocks.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

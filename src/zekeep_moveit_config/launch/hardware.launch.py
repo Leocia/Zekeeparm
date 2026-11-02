@@ -55,6 +55,8 @@ def generate_launch_description():
             arm_namespace_arg,
             model_arg,
             publish_worktable_arg,
+            DeclareLaunchArgument("shutdown_on_moveit_exit", default_value="true",
+                                  description="Shut down this launch if move_group exits"),
             OpaqueFunction(function=_launch_setup),
         ]
     )
@@ -133,6 +135,7 @@ def _launch_setup(context, *args, **kwargs):
                 on_exit=[
                     EmitEvent(event=Shutdown(reason="move_group exited"))
                 ],
-            )
+            ),
+            condition=IfCondition(LaunchConfiguration("shutdown_on_moveit_exit")),
         ),
     ]

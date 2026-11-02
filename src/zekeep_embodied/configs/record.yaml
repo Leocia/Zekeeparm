@@ -1,0 +1,86 @@
+# Paths are relative to this file. Keep motor calibration in the existing source.
+teleop_config: ../../zekeep_teleop/configs/zhongling_b601_teleop.yaml
+output: ../../../data/embodied
+task: 把红色方块放入托盘
+installation_id: ""
+# C100 currently delivers ~15 FPS even when the driver reports 30.
+# Sample at 10 Hz so each dual-camera observation contains fresh frames.
+fps: 10
+max_sync_s: 0.10
+max_cycle_s: 0.20
+queue_size: 16
+# Collector-only relative limit, degrees; never replace calibrated joint limits.
+max_target_step_deg: 2.0
+# Read-only ROS joystick capture. The recorder observes the already running
+# driver and joystick node; it never enables motors or publishes commands.
+ros_joystick:
+  arm_namespace: zekeep
+  joy_topic: /joy
+  hardware_config: ../../zekeep_bringup/config/zekeep_hardware.yaml
+  deadman_button: 6
+  close_button: 0
+  open_button: 1
+  max_state_age_s: 0.10
+  # Match the joystick controller timeout; keep joint feedback freshness separate.
+  max_joy_age_s: 0.30
+  connect_timeout_s: 5.0
+# Local policy server stays outside the ROS/Python 3.10 environment.
+pi05_runtime:
+  server: http://127.0.0.1:8000
+  repo_id: local/zekeep_pick_place_9hz
+  experiment: pick_place_9hz_1000
+  policy_hz: 9.0
+  max_action_step_deg: 0.5
+  max_joint_velocity_rad_s: 0.10
+  max_inference_s: 1.0
+  joy_timeout_s: 0.25
+  joint_limit_margin_rad: 0.02
+  gripper_hysteresis_deg: 5.0
+# Fill from the supervised setup, in the robot base frame; no automatic collision check.
+workspace:
+  confirmed: false
+  x_m: [0.27,0.45]
+  y_m: [-0.05,0.25]
+  table_z_m: 0.0
+  description: "方块"
+
+# The ROS leader collector uses the same guards as the existing ACT collector.
+# Actual leader following speeds still come from the calibrated teleop configuration.
+leader_control:
+  max_step_deg: 1.0
+  gripper_lower_tolerance_deg: 1.0
+  max_velocity_rad_s: 0.20
+  alignment_tolerance_deg: 5.0
+  feedback_timeout_s: 0.10
+  status_timeout_s: 1.0
+  joy_timeout_s: 0.25
+  inference_timeout_s: 0.20
+  service_timeout_s: 2.0
+cameras:
+  wrist:
+    type: orbbec
+    # SDK dependencies are isolated from LeRobot. Existing validated camera env.
+    python: ~/miniforge3/envs/rebotarm/bin/python
+    config: ../../zekeep_grasp/config/default.yaml
+  global:
+    type: opencv
+    model: WHEELTEC C100
+    device: /dev/video0  # Select the new global camera; prefer its /dev/v4l/by-id path.
+    fourcc: MJPG
+    width: 1280
+    height: 720
+    fps: 30
+    # Captured from qv4l2 on 2026-10-27; applied and verified at every open.
+    # Preserve auto modes; inactive exposure/WB temperature values are not set.
+    auto_exposure: true
+    exposure_auto_priority: true
+    gain: 0
+    auto_white_balance: true
+    brightness: 8
+    contrast: 37
+    saturation: 60
+    hue: 5
+    gamma: 100
+    sharpness: 4
+    backlight_compensation: 2
+    power_line_frequency: 1  # 50 Hz

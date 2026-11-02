@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>标定 GraspNet 参考点到真实 TCP</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <h1>标定 GraspNet 参考点到真实 TCP</h1>
+  <p>目标：求出一个固定三维向量，消除抓取中心与机器人 TCP 的固定几何差。</p>
+
+  <div class="danger">
+    当前 J6 有低频摆动记录。J6 未稳定前，只做离线计算；禁止自动运动标定。
+  </div>
+
+  <h2>1. 先分清三个量</h2>
+  <ul>
+    <li><code>grasp.translation</code>：GraspNet 抓取参考点，位于相机坐标系。</li>
+    <li><code>official_tcp</code>：机器人模型控制点。</li>
+    <li><code>grasp.depth</code>：GraspNet 夹爪几何参数，不是 TCP 平移补偿。</li>
+  </ul>
+  <p>GraspNet 官方格式把 translation、rotation、depth 分开保存。不要把 depth 当 TCP 偏置。见
+    <a href="https://graspnetapi.readthedocs.io/en/latest/grasp_format.html">GraspNet 6D grasp 格式</a>。
+  </p>
+
+  <h2>2. 先标真实 TCP</h2>
+  <p>在工作区固定一个尖点。让夹爪定义的物理中心从至少四种明显不同姿态对准同一点。若机器人 FK 算出的 TCP 不能保持在该固定点，先修 URDF 的 <code>official_tcp</code>。四点法原理可参考
+    <a href="https://www.universal-robots.com/articles/ur/robot-care-maintenance/kinematic-robot-calibration/">工业机器人 TCP 四点法</a>。
+  </p>
+  <p>四点法主要求 TCP 位置。TCP 轴方向仍应从 CAD、夹爪对称轴和项目的 GraspNet 轴转换确认。</p>
+
+  <h2>3. 采集固定偏置样本</h2>
+  <ol>
+    <li>固定一个尺寸已知、边缘清楚的方块。相机、桌面、方块都不能移动。</li>
+    <li>运行视觉流程，但不自动执行。保存候选的基座坐标 <code>p_graspnet</code> 和旋转 <code>R_grasp</code>。</li>
+    <li>教师监护下低速点动。把两指真正对称地放到目标两侧；指间中心和期望抓取深度正确。</li>
+    <li>读取此时 FK 的 <code>official_tcp</code> 位置，记为 <code>p_tcp_aligned</code>。</li>
+    <li>至少采 8 组。必须改变目标位置、夹爪 yaw、20–35° 倾角；不能全是同一顶抓姿态。</li>
+  </ol>
+
+  <h2>4. 每组求一个局部向量</h2>
+  <pre>v_i = R_grasp_i.T @ (p_graspnet_i - p_tcp_aligned_i)
+v   = median(v_i, axis=0)</pre>
+  <p>把中位数 <code>v</code> 写入：</p>
+  <pre>grasp_pipeline:
+  grasp:
+    tcp_to_grasp_center_m: [vx, vy, vz]</pre>
+  <div class="danger"><code>main.py</code> 当前调用未传入此参数。只改 YAML 不生效；启用前必须把该值传给 <code>grasp_to_base_poses(...)</code>，并补回归测试。</div>
+  <p>代码使用关系：</p>
+  <pre>p_tcp = p_graspnet - R_grasp @ v</pre>
+
+  <h2>5. 判断是不是固定 TCP 问题</h2>
+  <ul>
+    <li><code>v_i</code> 在各姿态下接近，分散约 2–3 mm 内：可以使用固定偏置。</li>
+    <li><code>v_i</code> 随腕姿变化：手眼标定、关节坐标或 RGB-D/关节同步有错。</li>
+    <li><code>v_i</code> 随相机距离变化：深度尺度、内参或 RGB-depth 对齐有错。</li>
+    <li>只有沿 approach axis 的误差变化：这是进深问题，应放进 <code>depth_correction_m</code>。</li>
+  </ul>
+
+  <h2>6. 验收</h2>
+  <ol>
+    <li>求解样本与验证样本分开；至少留 3 组未参与拟合。</li>
+    <li>离线计算最终 TCP；检查误差小于 3 mm。</li>
+    <li>先高于方块 30–50 mm 空走，确认方向和进退符号。</li>
+    <li>最后低速真抓 10 次，分别统计偏位、空抓、碰桌。</li>
+  </ol>
+
+  <div class="ok">快速自测：若把夹爪旋转 180° 后，世界坐标误差也跟着旋转，多半是局部 TCP 偏置；若误差方向不变，多半是手眼或全局坐标误差。</div>
+
+  <p>速查版：<a href="../reference/graspnet-tcp-calibration.html">GraspNet 到真实 TCP 标定速查</a>。有一步不清楚，继续问助手。</p>
+</body>
+</html>

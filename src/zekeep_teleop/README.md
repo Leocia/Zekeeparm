@@ -1,6 +1,6 @@
-# zekeep_teleop：zk_xm115 从臂遥操作
+# zekeep_teleop：NEW_ROBOT_ID 从臂遥操作
 
-本项目通过 LeRobot 将七轴舵机主臂的动作实时映射到 `zk_xm115` 七轴从臂。
+本项目通过 LeRobot 将七轴舵机主臂的动作实时映射到 `NEW_ROBOT_ID` 七轴从臂。
 
 本目录随 `Zekeeparm_ws` 统一维护，保留独立的 Python/LeRobot 环境。
 `COLCON_IGNORE` 将其排除在 ROS 构建之外；无需启动 ROS 或 MoveIt。
@@ -14,7 +14,7 @@
 - Python：`3.12`
 - LeRobot：`0.4.4`
 - 主臂：七轴舵机臂，串口波特率 `115200`
-- 从臂：`zk_xm115`，Damiao USB-CAN
+- 从臂：`NEW_ROBOT_ID`，Damiao USB-CAN
 - 控制频率：`50 Hz`
 - 设备端口：以目标计算机实际识别结果为准
 - 已验证主臂方向：`[1, 1, 1, -1, -1, 1, 1]`
@@ -24,7 +24,7 @@ J1 ±2.58 rad、J2/J3 0–3.7 rad 及六轴 `-1` 方向不覆盖本包配置。
 
 当前关节映射如下。角度为已经完成实机验证的程序动作范围，不要用未经上机验证的标称角度覆盖。
 
-| 主臂舵机 ID | zk_xm115 关节 | 从臂 CAN ID | 程序动作范围 |
+| 主臂舵机 ID | NEW_ROBOT_ID 关节 | 从臂 CAN ID | 程序动作范围 |
 |---:|---|---:|---:|
 | 001 | shoulder_pan | 001 | -149.54°～149.54° |
 | 002 | shoulder_lift | 002 | -211.99°～0° |
@@ -98,7 +98,7 @@ sudo usermod -aG dialout "$USER"
 
 ## 5. 连接并识别设备
 
-先连接主臂，再连接 zk_xm115 的 Damiao USB-CAN 适配器，然后执行：
+先连接主臂，再连接 NEW_ROBOT_ID 的 Damiao USB-CAN 适配器，然后执行：
 
 ```bash
 python -m serial.tools.list_ports -v
@@ -111,7 +111,7 @@ ls -l /dev/serial/by-id/ 2>/dev/null
 ```yaml
 robot:
   port: /dev/ttyACM1
-  id: zk_xm115
+  id: NEW_ROBOT_ID
 teleop:
   port: /dev/ttyUSB0
 ```
@@ -128,7 +128,7 @@ fuser -v /dev/ttyUSB0 /dev/ttyACM1
 
 ## 6. 启动前检查主臂
 
-此时先不要使能 zk_xm115。从臂周围保持无人员、无障碍物，并确认急停开关有效。
+此时先不要使能 NEW_ROBOT_ID。从臂周围保持无人员、无障碍物，并确认急停开关有效。
 
 把主臂摆到机械零位，使用只读工具确认舵机 001～007 都能通信：
 
@@ -151,7 +151,7 @@ zhongling-tune \
 
 ## 7. 启动遥操作
 
-首次在新计算机运行时，应支撑 zk_xm115，从小幅单关节动作开始检查方向和限位，再逐步扩大动作范围。
+首次在新计算机运行时，应支撑 NEW_ROBOT_ID，从小幅单关节动作开始检查方向和限位，再逐步扩大动作范围。
 
 ```bash
 conda activate lerobot
@@ -170,7 +170,7 @@ SeeedB601DMFollower connected
 Teleop: 49.x Hz ... target 50 Hz
 ```
 
-按 `Ctrl+C` 停止。程序会先断开 zk_xm115 并释放从臂力矩，再关闭主臂串口。
+按 `Ctrl+C` 停止。程序会先断开 NEW_ROBOT_ID 并释放从臂力矩，再关闭主臂串口。
 
 ## 8. 常见问题
 
@@ -223,3 +223,4 @@ teleop:
 
 - [工作区入口](../../README.md)：ROS 与视觉环境、模型和接口。
 - [舵机网页标定](src/servo_gui/README.md)：仅操作主臂串口舵机。
+- [示范数据采集](../zekeep_embodied/README.md)：独立 Python 3.10 环境，复用本包标定。

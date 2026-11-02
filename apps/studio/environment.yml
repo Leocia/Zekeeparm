@@ -1,0 +1,12 @@
+name: zekeep-studio
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy>=1.26,<3
+  - pyyaml>=6,<7
+  - pinocchio>=3.9,<5
+  - pyinstaller>=6.16,<7
+  - pip
+  - pip:
+      - motorbridge==0.5.1

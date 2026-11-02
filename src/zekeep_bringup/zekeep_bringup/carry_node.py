@@ -121,7 +121,7 @@ class CarryNode(Node):
             "sim": True,
             "auto_start": False,
             "preview_only": False,
-            "home_joint_positions": [0.0] * 6,
+            "home_joint_positions": [0.0, 0.698131701, 0.698131701, -0.610865238, 0.0, 0.0],
             "velocity_scaling": 0.4,
             "acceleration_scaling": 0.15,
             "planning_time": 5.0,

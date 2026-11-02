@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import threading
 import time
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -79,7 +80,7 @@ class JointCfg:
 def load_cfg(hw_yaml: str | None = None) -> dict:
     hw_path = _resolve_hw_cfg_path(hw_yaml)
 
-    with open(hw_path, "r") as f:
+    with open(hw_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     joints = []
@@ -250,7 +251,7 @@ class JointGroup:
 
     # ── 模式切换 ────────────────────────────────────────────────────────
 
-    def _write_pv_params(self, jc: JointCfg) -> None:
+    def _write_pv_params(self, jc: JointCfg) -> bool:
         m = self._mm[jc.name]
         try:
             if jc.vendor == "robstride":
@@ -267,8 +268,10 @@ class JointGroup:
                 m.write_register_f32(27, jc.pos_kp)
                 m.write_register_f32(28, jc.pos_ki)
             time.sleep(0.02)
+            return True
         except Exception as e:
             print(f"[{self.name}/pv_params/{jc.name}] {e}")
+            return False
 
     def mode_mit(
         self,
@@ -300,7 +303,9 @@ class JointGroup:
             self._pv_vlim = np.asarray(vlim, dtype=np.float64).reshape(-1)
         ok = True
         for jc in self._jcfgs:
-            self._write_pv_params(jc)
+            if not self._write_pv_params(jc):
+                ok = False
+                continue
             try:
                 self._mm[jc.name].ensure_mode(Mode.POS_VEL, 1000)
             except CallError as e:
@@ -485,7 +490,9 @@ class RebotArm:
         self._connected = True
 
     def _make_controller(self, vendor: str) -> Controller:
-        if str(Path(self._channel).resolve()).startswith("/dev/tty"):
+        windows_port = self._channel.removeprefix("\\\\.\\")
+        if (str(Path(self._channel).resolve()).startswith("/dev/tty")
+                or re.fullmatch(r"COM[1-9][0-9]*", windows_port, re.IGNORECASE)):
             return Controller.from_dm_serial(self._channel, 921600)
         return Controller(self._channel)
 

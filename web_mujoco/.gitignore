@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/models/
+simulation.urdf
+simulation.urdf.tmp
+src/robot-config.json.tmp
+__pycache__/
+.venv/

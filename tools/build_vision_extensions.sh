@@ -20,7 +20,6 @@ print(torch.cuda.get_device_name(), torch.cuda.get_device_capability())
 CHECK
 # Build in a fresh temporary copy: never reuse old ABI/GPU objects from checkout.
 build_dir="$(mktemp -d)"
-trap 'rm -rf -- "$build_dir"' EXIT
 python - "$workspace_dir" "$build_dir" <<'COPY'
 import shutil, sys
 from pathlib import Path
@@ -30,4 +29,5 @@ for name in ("pointnet2", "knn"):
                     ignore=shutil.ignore_patterns("build", "dist", "*.so", "*.o", "*.egg-info", "__pycache__"))
 COPY
 python -m pip install --no-build-isolation --no-deps "$build_dir/pointnet2" "$build_dir/knn"
-printf 'GraspNet CUDA extensions installed.\n'
+python -c 'import pointnet2._ext; import knn_pytorch; import torch; print(torch.__version__, torch.version.cuda)'
+printf 'Build sources retained for diagnostics: %s\n' "$build_dir"

@@ -7,23 +7,29 @@ zekeep_cartesian_joystick:
     # X, Y, Z, roll, pitch, yaw: LY, LX, RY, D-pad Y, D-pad X, RX.
     axis_indices: [1, 0, 3, 7, 6, 2]
     axis_signs: [1.0, 1.0, 1.0, -1.0, 1.0, 1.0]
-    max_speeds: [0.04, 0.04, 0.04, 0.25, 0.25, 0.25]
+    max_speeds: [0.10, 0.10, 0.10, 0.5, 0.5, 0.5]
     # Joint mode selected by LB+Y: LX, LY, RY, RX, D-pad X, D-pad Y.
     joint_axis_indices: [0, 1, 3, 2, 6, 7]
     joint_axis_signs: [-1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    joint_max_speeds: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+    joint_max_speeds: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
     joint_lower_limits: [-2.58, 0.0, 0.0, -1.57, -1.57, -1.57]
     joint_upper_limits: [2.58, 3.7, 3.7, 1.57, 1.57, 1.57]
     deadman_button: 6
     close_button: 0
     open_button: 1
+    gripper_open_axis: 5   # LT，按住逐步打开；松开保持。
+    gripper_close_axis: 4  # RT，按住逐步闭合；松开保持。
+    gripper_speed: 0.575  # rad/s，扳机按到底时全行程约 2 秒。
+    gripper_open_position: 1.15  # 与驱动的夹爪标定保持一致。
+    gripper_close_position: 0.0
     safe_home_button: 3
+    return_ready_modifier_button: 7  # RB，先按住再按 X 回准备位，需要 MoveIt。
     joint_mode_button: 2
     deadzone: 0.12
     publish_rate: 15.0
     joy_timeout: 0.3
     max_joint_step: 0.15
-    max_joint_speed: 0.5
+    max_joint_speed: 0.5  # rad/s，与关节模式及末端旋转的角速度一致。
     # 0 inherits the driver's grasp profile (Nm, Nm, seconds).
     grasp_closing_torque: 0.0
     grasp_hold_torque: 0.0

@@ -1,0 +1,35 @@
+capture_config: ../../zekeep_embodied/configs/record.yaml
+output: ../../../data/act__pick_place
+repo_id: local/zekeep_act__pick_place
+image_size: 224
+episodes: 50
+validation_episodes: 5
+seed: 42
+
+inference:
+  temporal_ensemble_steps: 2
+  temporal_ensemble_coeff: 0.01
+
+gripper:
+  prediction_margin_deg: 10.0
+
+training:
+  device: cuda
+  batch_size: 4
+  num_workers: 2
+  steps: 20000
+  save_freq: 1000
+  chunk_size: 10
+  learning_rate: 0.00001
+  pretrained_backbone: true
+
+control:
+  max_step_deg: 1.0
+  gripper_lower_tolerance_deg: 1.0
+  max_velocity_rad_s: 0.20
+  alignment_tolerance_deg: 5.0
+  feedback_timeout_s: 0.10
+  status_timeout_s: 1.0
+  joy_timeout_s: 0.25
+  inference_timeout_s: 0.20
+  service_timeout_s: 2.0

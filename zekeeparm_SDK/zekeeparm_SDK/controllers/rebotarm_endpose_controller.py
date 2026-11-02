@@ -139,15 +139,20 @@ class RebotArmEndPose:
         self.rebotarm.connect()
         if self._arm_group:
             if self._arm_control_mode == "mit":
-                self._arm_group.mode_mit(
+                ok = self._arm_group.mode_mit(
                     kp=self._arm_group._mit_kp,
                     kd=self._arm_group._mit_kd,
                 )
             else:
-                self._arm_group.mode_pos_vel()
+                ok = self._arm_group.mode_pos_vel()
+            if not ok:
+                raise RuntimeError("arm mode switch failed; refusing to enable")
+        if self._has_gripper:
+            if not self._gripper_group.mode_mit():
+                raise RuntimeError("gripper mode switch failed; refusing to enable")
+        if self._arm_group:
             self._arm_group.enable()
         if self._has_gripper:
-            self._gripper_group.mode_mit()
             self._gripper_group.enable()
         self.rebotarm.start_control_loop(self._loop_cb)
         self._running = True
@@ -168,14 +173,16 @@ class RebotArmEndPose:
     # ── 公共 API ───────────────────────────────────────────────────────────
 
     def set_gripper_target(self, pos: float) -> None:
-        self._gripper_target = float(pos)
+        target = float(pos)
+        if not np.isfinite(target) or not 0.0 <= target <= 1.35:
+            raise ValueError("gripper target must be within [0, 1.35] rad")
+        self._gripper_target = target
 
     def open_gripper(self) -> None:
         if self._has_gripper:
             self._gripper_group._mit_kp.fill(0)
             self._gripper_group._mit_kd.fill(0)
-            pv = self._gripper_group._pv_vlim
-            self._gripper_target = float(pv[0]) if pv.size > 0 else 0.0
+            self.set_gripper_target(1.35)
 
     def close_gripper(self) -> None:
         if self._has_gripper:

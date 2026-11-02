@@ -18,7 +18,7 @@ ros2 launch zekeep_bringup driver.launch.py channel:=/dev/ttyACM0
 `ros2 launch zekeep_moveit_config hardware.launch.py arm_namespace:=zekeep`。
 
 硬件参数来自 `../zekeep_bringup/config/zekeep_hardware.yaml`，节点默认参数来自
-同目录 `driver_params.yaml`。六轴方向均为 `-1`，J1 `±2.58 rad`、J2/J3 `0–3.7 rad`、
+同目录 `driver_params.yaml`。六轴方向均为 `-1`，J1 `±2.58 rad`、J2 `0–3.7 rad`、J3 `-0.01–3.7 rad`、
 J4–J6 `±1.57 rad`；标准手臂控制模式为 `posvel`。修改后需重新构建并重启。
 
 ## 常用接口

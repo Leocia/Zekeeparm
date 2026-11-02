@@ -7,7 +7,6 @@ config_files = [
     "config/carry_params.yaml",
     "config/driver_params.yaml",
     "config/zekeep_hardware.yaml",
-    "config/zekeep_hardware_withnogravity.yaml",
 ]
 web_files = [
     path

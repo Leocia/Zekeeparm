@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zekeeparm · 机械臂工作台</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="workspace-header">
+      <div class="workspace-brand">
+        <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><path d="M7 29h13M13 29v-7l9-8-7-7M22 14l6 3M28 17l2-3m-2 3-1 3"/><circle cx="13" cy="22" r="3"/><circle cx="22" cy="14" r="3"/></svg>
+        <div>
+          <p class="eyebrow" data-i18n="panel.eyebrow">Z E K E E P  R O B O T I C S</p>
+          <h1 data-i18n="panel.title">Zekeeparm 工作台</h1>
+        </div>
+      </div>
+      <div class="header-tools">
+        <span class="simulation-label" data-i18n="workspace.simulation">浏览器仿真</span>
+        <select id="lang-select" class="lang-select" aria-label="Select language">
+          <option value="zh">🇨🇳 中文</option>
+          <option value="ja">🇯🇵 日本語</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+    </header>
+    <section class="viewport" id="viewport">
+      <div class="button-row viewport-toolbar">
+        <button type="button" id="toggle-drag" data-i18n="btn.dragOn">Enable TCP drag</button>
+        <button type="button" id="reset" data-i18n="btn.reset">Reset</button>
+        <button type="button" id="toggle-guides" data-i18n="btn.guidesOn" aria-pressed="false">Show all guides</button>
+        <button type="button" id="pause-simulation" aria-pressed="false" data-i18n="workspace.pause">暂停仿真</button>
+      </div>
+
+      <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+        <div class="loading-ring" aria-hidden="true"></div>
+        <p class="loading-title" data-i18n="loading.title">Building digital twin</p>
+        <p class="loading-text" id="loading-text">Starting…</p>
+        <div class="loading-progress" id="loading-progress" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="loading-progress-track" aria-hidden="true">
+            <div class="loading-progress-fill" id="loading-progress-fill"></div>
+          </div>
+          <span class="loading-progress-value" id="loading-progress-value">0%</span>
+        </div>
+      </div>
+      <p class="status" id="status">Starting…</p>
+      <div class="callouts" id="callouts"></div>
+      <div id="drag-cluster" class="drag-cluster">
+        <div id="drag-marker" class="drag-marker" data-i18n-title="marker.tcp" title="Drag TCP"></div>
+        <div class="gripper-fab">
+          <button type="button" id="gripper-open" data-i18n="btn.open">Open</button>
+          <button type="button" id="gripper-close" data-i18n="btn.close">Close</button>
+        </div>
+      </div>
+      <div class="object-edit-hud" id="object-edit-hud" hidden>
+        <div class="object-edit-hud-heading">
+          <strong data-i18n="object.hudTitle">Object editing</strong>
+          <span>WASD</span>
+        </div>
+        <p class="object-edit-selection" id="object-edit-selection">Selected: Red cube</p>
+        <p data-i18n="object.hudMove">Arm-relative: W forward / S back / A left / D right; left-drag to move</p>
+        <p data-i18n="object.hudRotate">Right-drag or Shift + left-drag: 3D rotate</p>
+      </div>
+    </section>
+    <aside class="panel">
+      <p class="panel-heading" data-i18n="workspace.controls">操作台</p>
+      <p class="hint" id="panel-hint" data-i18n="panel.hint">Hold and drag the TCP marker to move the tip; use Open/Close beside it for the gripper.</p>
+      <section class="control-card grasp-controls" id="grasp-controls" aria-labelledby="grasp-title">
+        <div class="control-card-heading">
+          <h2 id="grasp-title" data-i18n="grasp.title">One-click grasp demo</h2>
+          <span class="feature-badge">AUTO</span>
+        </div>
+        <p class="control-hint" id="grasp-hint" data-i18n="grasp.hint">Choose a target and return it to its matching storage zone, or stack all three in order.</p>
+        <div class="vision-targets" id="vision-targets" role="group" data-i18n-aria-label="vision.targetAria">
+          <button type="button" class="vision-target active" data-target="red" aria-pressed="true"><i class="target-red"></i><span data-i18n="vision.red">Red cube</span></button>
+          <button type="button" class="vision-target" data-target="blue" aria-pressed="false"><i class="target-blue"></i><span data-i18n="vision.blue">Blue block</span></button>
+          <button type="button" class="vision-target" data-target="yellow" aria-pressed="false"><i class="target-yellow"></i><span data-i18n="vision.yellow">Yellow cylinder</span></button>
+        </div>
+        <div class="grasp-actions">
+          <button type="button" id="start-grasp" data-i18n="grasp.start">▶ Put away</button>
+          <button type="button" id="start-stack" data-i18n="grasp.stack">▲ Stack</button>
+          <button type="button" id="cancel-grasp" disabled data-i18n="grasp.cancel">Stop</button>
+        </div>
+        <div class="grasp-progress-row">
+          <progress id="grasp-progress" max="1" value="0"></progress>
+          <output id="grasp-progress-value">0%</output>
+        </div>
+        <p class="grasp-stage"><span data-i18n="grasp.stageLabel">Stage</span><strong id="grasp-stage" aria-live="polite" data-i18n="grasp.stage.idle">Ready</strong></p>
+      </section>
+      <section class="control-card task-controls" aria-labelledby="obstacle-title">
+        <div class="control-card-heading"><h2 id="obstacle-title" data-i18n="obstacle.title">搬运与避障</h2><span class="feature-badge">PLAN</span></div>
+        <p class="control-hint" data-i18n="obstacle.hint">启用后可直接拖动橙色箱体；坐标实时同步。自动任务运行时锁定拖动。</p>
+        <form id="obstacle-form">
+          <fieldset id="obstacle-fields">
+            <label class="check-label"><input id="obstacle-enabled" type="checkbox"><span data-i18n="obstacle.enable">启用障碍物</span></label>
+            <div class="position-fields">
+              <label>X (mm)<input id="obstacle-x" type="number" min="150" max="580" step="any" value="300" required></label>
+              <label>Y (mm)<input id="obstacle-y" type="number" min="-380" max="380" step="any" value="-300" required></label>
+            </div>
+            <div class="position-fields obstacle-size-fields">
+              <label><span data-i18n="obstacle.length">长 X (mm)</span><input id="obstacle-length" type="number" min="10" max="400" step="any" value="50" required></label>
+              <label><span data-i18n="obstacle.width">宽 Y (mm)</span><input id="obstacle-width" type="number" min="10" max="400" step="any" value="90" required></label>
+              <label><span data-i18n="obstacle.height">高 Z (mm)</span><input id="obstacle-height" type="number" min="10" max="400" step="any" value="180" required></label>
+            </div>
+            <div class="button-row"><button type="submit" data-i18n="obstacle.apply">应用障碍物</button><button id="obstacle-demo" type="button" data-i18n="obstacle.demo">红色搬运场景</button></div>
+          </fieldset>
+        </form>
+        <p id="obstacle-status" class="control-hint" role="status" aria-live="polite" data-i18n="obstacle.off">障碍物未启用</p>
+      </section>
+      <section class="control-card teaching-controls" aria-labelledby="study-title">
+        <div class="control-card-heading"><h2 id="study-title" data-i18n="study.title">教学实验舱</h2><span class="feature-badge">DEBUG</span></div>
+        <div class="study-toggles">
+          <label class="check-label"><input id="study-frames" type="checkbox"><span data-i18n="study.frames">显示 Link / 关节坐标系</span></label>
+          <label class="check-label"><input id="study-hulls" type="checkbox"><span data-i18n="study.hulls">显示碰撞凸包与指垫</span></label>
+          <label class="check-label"><input id="study-paths" type="checkbox" checked><span data-i18n="study.paths">显示规划轨迹与航点</span></label>
+          <label class="check-label"><input id="study-proximity" type="checkbox" checked><span data-i18n="study.proximity">显示最近距离警戒线</span></label>
+        </div>
+        <p class="control-hint" id="study-geometry" data-i18n="study.geometry">坐标轴：X 红 / Y 绿 / Z 蓝；碰撞包络显示编译后的凸包和指垫，外观半透明。</p>
+        <p class="study-distance" id="study-distance" role="status" data-i18n="study.disabled">启用障碍物后显示实际最近表面距离。</p>
+        <p class="control-hint" data-i18n="study.legend">红虚线：被拒直线；红标记：碰撞/间距冲突位置；绿线：通过检测的 TCP 轨迹；绿点：安全过渡航点。</p>
+        <p id="study-plan-status" class="control-hint" role="status" data-i18n="study.idle">点击「红色搬运场景」启动规划，观察采样、碰撞检测和候选绕行。</p>
+        <details class="study-log-panel" open><summary data-i18n="study.log">算法调试日志（最近 160 条）</summary>
+          <ol id="study-log" class="study-log" role="log" aria-label="算法调试日志" aria-live="off"></ol>
+          <button type="button" id="study-clear" data-i18n="study.clear">清空日志与轨迹</button>
+        </details>
+        <details class="study-guide"><summary data-i18n="study.experiments">实训指南</summary>
+          <p class="control-hint" data-i18n="study.experiment1">实验一：缩小 joint2 的 lower / upper，观察行号诊断；限位需包含 ready_pose。修正后同步，再拖动关节观察可达范围。TF 与碰撞包络可辅助分析。</p>
+          <p class="control-hint" data-i18n="study.experiment2">实验二：点击红色搬运场景，比较被拒直线与绕行。停止任务后调整箱体位置或尺寸，重试并观察失败原因。重叠放置会被拒绝；有限候选搜索无解时停止任务。</p>
+        </details>
+      </section>
+      <section class="control-card model-controls" aria-labelledby="model-title">
+        <div class="control-card-heading"><h2 id="model-title" data-i18n="model.title">URDF 同步</h2><span class="feature-badge">URDF</span></div>
+        <p id="model-hint" class="control-hint" data-i18n="model.hint">使用项目内置模型，编辑保存为 simulation.urdf。同步会复位场景。</p>
+        <form id="urdf-editor">
+          <details><summary data-i18n="model.expand">编辑 URDF</summary>
+            <p class="control-hint" data-i18n="model.support">支持当前六轴的原点、轴、限位、质量、惯量与颜色；保留拓扑和指垫近似。</p>
+            <label for="urdf-text" class="control-hint" data-i18n="model.label">当前六轴机械臂 URDF</label>
+            <textarea id="urdf-text" spellcheck="false" disabled aria-describedby="urdf-diagnostic-summary" aria-invalid="false"></textarea>
+            <p id="urdf-diagnostic-summary" class="control-hint" role="status"></p>
+            <ul id="urdf-diagnostics" class="urdf-diagnostics" aria-label="URDF 诊断"></ul>
+            <div class="button-row"><button type="submit" data-i18n="model.save">保存并同步</button><button id="urdf-read" type="button" data-i18n="model.read">重新读取</button><button id="urdf-restore" type="button" data-i18n="model.restore">恢复内置模型</button></div>
+          </details>
+        </form>
+        <p id="urdf-status" class="control-hint" role="status" aria-live="polite"></p>
+      </section>
+      <section class="control-card part-explorer" id="part-explorer" aria-labelledby="part-explorer-title">
+        <div class="control-card-heading">
+          <h2 id="part-explorer-title" data-i18n="part.title">Part explorer</h2>
+          <span class="part-count" data-i18n="part.clickHint">Click the model to select</span>
+        </div>
+        <select id="part-select" class="part-select" data-i18n-aria-label="part.selectAria"></select>
+        <p class="part-empty" id="part-empty" data-i18n="part.empty">Select an arm part to inspect its details.</p>
+        <article class="part-details" id="part-details" hidden>
+          <div class="part-name-row">
+            <strong id="part-name"></strong>
+            <span id="part-kind"></span>
+          </div>
+          <dl>
+            <div><dt data-i18n="part.body">Assembly</dt><dd id="part-body"></dd></div>
+            <div><dt data-i18n="part.joint">Joint</dt><dd id="part-joint"></dd></div>
+            <div><dt data-i18n="part.material">Material</dt><dd id="part-material"></dd></div>
+          </dl>
+          <p id="part-description" class="part-description"></p>
+        </article>
+        <div class="part-actions">
+          <button type="button" id="part-isolate" disabled>Isolate part</button>
+          <button type="button" id="part-clear" disabled>Clear selection</button>
+        </div>
+      </section>
+      <section class="control-card telemetry-controls" id="telemetry-controls" aria-labelledby="telemetry-title">
+        <div class="control-card-heading">
+          <h2 id="telemetry-title" data-i18n="telemetry.title">Contacts and forces</h2>
+          <button type="button" id="toggle-contact-visuals" role="switch" aria-checked="true" data-i18n="telemetry.hideContacts">Hide contacts</button>
+        </div>
+        <div class="telemetry-metrics">
+          <div><span data-i18n="telemetry.contacts">Contacts</span><strong id="contact-count">0</strong></div>
+          <div><span data-i18n="telemetry.graspForce">Grip force</span><strong id="grasp-force">0.0 N</strong></div>
+          <div><span data-i18n="telemetry.rmsError">RMS error</span><strong id="rms-error">0.0 mrad</strong></div>
+        </div>
+        <div class="torque-bars" id="torque-bars" aria-label="Joint torque"></div>
+        <div class="telemetry-chart">
+          <span data-i18n="telemetry.torqueChart">Joint torque curves · N·m</span>
+          <canvas id="torque-chart" width="276" height="88"></canvas>
+        </div>
+        <div class="telemetry-chart">
+          <span data-i18n="telemetry.errorChart">Joint error curves · rad</span>
+          <canvas id="error-chart" width="276" height="88"></canvas>
+        </div>
+      </section>
+    </aside>
+      <section class="control-card camera-controls" aria-labelledby="camera-controls-title">
+        <div class="control-card-heading">
+          <h2 id="camera-controls-title" data-i18n="camera.title">Vision mode</h2>
+          <button type="button" id="toggle-camera-views" class="camera-power-switch"
+                  role="switch" aria-checked="true" data-i18n="camera.hideAll">Hide feeds</button>
+        </div>
+        <div class="camera-toolbar">
+          <div class="camera-layout-switch" role="group" data-i18n-aria-label="camera.layoutAria">
+            <button type="button" id="camera-layout-row" class="active" aria-pressed="true" data-i18n="camera.layoutRow">Side by side</button>
+            <button type="button" id="camera-layout-column" aria-pressed="false" data-i18n="camera.layoutColumn">Stacked</button>
+          </div>
+          <button type="button" id="toggle-camera-model" class="camera-model-switch"
+                  role="switch" aria-checked="true" data-i18n="camera.modelHide">Hide camera model</button>
+        </div>
+        <div class="camera-feed-grid" id="camera-feed-grid">
+          <article class="camera-feed is-live" id="overhead-camera-feed">
+            <div class="camera-feed-heading">
+              <span data-i18n="camera.overhead">Global overhead camera</span>
+              <div class="camera-feed-actions">
+                <span class="camera-mode-badge">RGB</span>
+                <button type="button" class="camera-collapse" id="collapse-overhead-camera"
+                        aria-expanded="true" aria-controls="overhead-camera-screen"
+                        data-i18n-aria-label="camera.collapse">⌃</button>
+              </div>
+            </div>
+            <div class="camera-screen" id="overhead-camera-screen">
+              <canvas id="overhead-camera-canvas" width="320" height="240" data-i18n-aria-label="camera.overheadAria"></canvas>
+              <span class="camera-paused" data-i18n="camera.paused">Feed paused</span>
+            </div>
+          </article>
+          <article class="camera-feed is-live" id="wrist-camera-feed">
+            <div class="camera-feed-heading">
+              <span data-i18n="camera.wrist">Gemini 305 · RGB</span>
+              <div class="camera-feed-actions">
+                <span class="camera-mode-badge">RGB</span>
+                <button type="button" class="camera-collapse" id="collapse-wrist-camera"
+                        aria-expanded="true" aria-controls="wrist-camera-screen"
+                        data-i18n-aria-label="camera.collapse">⌃</button>
+              </div>
+            </div>
+            <div class="camera-screen" id="wrist-camera-screen">
+              <canvas id="wrist-camera-canvas" width="320" height="240" data-i18n-aria-label="camera.previewAria"></canvas>
+              <span class="camera-paused" data-i18n="camera.paused">Feed paused</span>
+            </div>
+          </article>
+        </div>
+      </section>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

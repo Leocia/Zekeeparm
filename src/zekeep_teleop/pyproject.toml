@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lerobot_teleoperator_zhongling"
 version = "0.1.0"
-description = "Zhongling seven-axis leader teleoperation for the zk_xm115 follower"
+description = "Zhongling seven-axis leader teleoperation for the NEW_ROBOT_ID follower"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10,<3.13"

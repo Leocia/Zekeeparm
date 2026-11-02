@@ -71,6 +71,7 @@ def create_controller_node(
     configurations: Mapping[str, LaunchConfiguration],
     *,
     shutdown_on_exit: bool = False,
+    python_executable: Any = None,
 ) -> Node:
     """Create the Zekeep controller node from shared launch values."""
     parameters = {
@@ -98,6 +99,7 @@ def create_controller_node(
         "executable": "ZekeepController",
         "name": "ZekeepController",
         "output": "screen",
+        "additional_env": {"PYTHONUNBUFFERED": "1"},
         # Infinity: failed homing must retain holding torque, never force-kill.
         "sigterm_timeout": "1e309",
         "sigkill_timeout": "1e309",
@@ -107,4 +109,6 @@ def create_controller_node(
         node_arguments["on_exit"] = Shutdown(
             reason="ZekeepController exited"
         )
+    if python_executable is not None:
+        node_arguments["prefix"] = python_executable
     return Node(**node_arguments)

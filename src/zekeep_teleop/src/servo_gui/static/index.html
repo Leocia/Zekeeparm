@@ -425,6 +425,10 @@
       font-size: 16px;
     }
 
+    #move-duration {
+      width: 110px;
+    }
+
     .legend {
       display: flex;
       flex-wrap: wrap;
@@ -978,7 +982,7 @@
               目标 PWM 由后端固定表提供，界面不可修改。
             </div>
             <div class="toolbar-row">
-              <label>容差 ±<input type="number" id="tolerance-input" min="0" max="500" step="1" value="10"></label>
+              <label>容差 ±<input type="number" id="tolerance-input" min="0" max="500" step="1" value="60"></label>
               <label><input type="checkbox" id="keep-torque"> 保持力矩（开读数时不发 PULK）</label>
             </div>
             <div class="table-scroll">
@@ -1002,10 +1006,37 @@
         <article class="card">
           <div class="card-header">
             <div>
+              <h2 class="card-title">002 / 003 移动对位</h2>
+              <p class="card-subtitle">逐轴移动到 PWM 2400，到位后保持扭矩</p>
+            </div>
+            <button class="button secondary" id="refresh-zero" type="button" disabled>刷新全部读数</button>
+          </div>
+          <div class="card-body">
+            <div class="warn-box">
+              <strong>会实际驱动舵机，不改写机械零位。</strong>
+              确认运动路径无阻挡，手避开夹点。到位后可检查姿态，再按「释力」手动调整；释力后关节可能因重力移动。
+            </div>
+            <div class="manual-id-row">
+              <label for="move-duration">移动时间（ms）</label>
+              <input id="move-duration" type="number" min="500" max="9999" step="1" value="2000" aria-describedby="move-duration-hint">
+              <span class="hint-text" id="move-duration-hint">500–9999 ms；时间越长，移动越慢</span>
+            </div>
+            <p class="hint-text" id="move-blocked" hidden></p>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>ID</th><th>动作</th><th>目标 PWM</th><th>当前 PWM</th><th>操作</th></tr></thead>
+                <tbody id="move-body"></tbody>
+              </table>
+            </div>
+            <p class="hint-text" id="move-result" role="status" aria-live="polite">移动后回读 PWM，验证到位；扭矩状态以实物为准。</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-header">
+            <div>
               <h2 class="card-title">机械零位标定</h2>
               <p class="card-subtitle">把关节扶到正确机械零位并扶稳，再执行标定</p>
             </div>
-            <button class="button secondary" id="refresh-zero" type="button" disabled>刷新当前读数</button>
           </div>
           <div class="card-body">
             <div class="warn-box">
@@ -1013,8 +1044,7 @@
               把该关节放在正确机械零位并持续扶稳后再执行；命令会把当前物理位置直接写成目标值，
               不需要、也不要先把舵盘手动拧到目标 PWM。写入前会连续采样三次，读数跨度超过 5 会拒绝写入。
               标定后再次发送释力，不自动恢复扭矩；无确认回包时须人工检查释力状态。
-              目标读数不是 1500 的轴没有命令可用（<span class="mono">PSCK</span> 只能映射成 1500），
-              只能在「舵机读数」页手动旋转舵盘对位。
+              <span class="mono">PSCK</span> 只能映射成 1500；002 / 003 的目标是 2400，请使用上方「移动对位」检查位置。
             </div>
             <p class="hint-text" id="zero-blocked" hidden></p>
             <div class="table-scroll">
@@ -1355,6 +1385,10 @@
       readingBody: document.querySelector("#reading-body"),
       stopAllReading: document.querySelector("#stop-all-reading"),
       zeroBody: document.querySelector("#zero-body"),
+      moveBody: document.querySelector("#move-body"),
+      moveDuration: document.querySelector("#move-duration"),
+      moveBlocked: document.querySelector("#move-blocked"),
+      moveResult: document.querySelector("#move-result"),
       refreshZero: document.querySelector("#refresh-zero"),
       idBlocked: document.querySelector("#id-blocked"),
       manualSource: document.querySelector("#manual-source"),
@@ -1382,7 +1416,7 @@
       plan: {},
       statusOk: null,
       pendingPowerCycle: {},
-      tolerance: 10,
+      tolerance: 60,
       readings: {},
       activeIds: [],
       readingTimer: null,
@@ -1419,7 +1453,10 @@
       });
       state.rows.zero.forEach((row) => {
         row.calibrate.disabled = row.manual || blocked || reading;
+        if (row.move) row.move.disabled = blocked || reading;
+        if (row.release) row.release.disabled = blocked;
       });
+      elements.moveDuration.disabled = blocked || reading;
       document.querySelectorAll(".id-button").forEach((button) => {
         button.disabled = blocked || reading;
       });
@@ -1440,6 +1477,10 @@
         node.textContent = reason;
         node.hidden = !reason;
       });
+      elements.moveBlocked.textContent = !connected ? "未连接串口，移动不可用。"
+        : state.writing ? "正在执行操作，请等待完成。"
+        : reading ? "移动前请先停止全部读数，避免释力干扰运动。" : "";
+      elements.moveBlocked.hidden = !elements.moveBlocked.textContent;
     }
 
     function cell(row, text, className) {
@@ -1528,7 +1569,8 @@
           row.pill.textContent = "需调整";
           row.hint.textContent = plan
             ? `${formatId(id)} 机械零位目标为 ${target}，当前偏差 ${deviation > 0 ? "+" : ""}${deviation}；`
-              + `请在机械零位执行 ${plan.command} 标定。`
+              + (plan.manual ? "可在「零位标定」页移动到 2400 检查姿态，或释力后手动对位。"
+                : `请在机械零位执行 ${plan.command} 标定。`)
             : "";
         }
       });
@@ -1536,13 +1578,14 @@
 
     function buildZeroTable() {
       elements.zeroBody.replaceChildren();
+      elements.moveBody.replaceChildren();
       state.rows.zero.clear();
       SERVO_IDS.forEach((id) => {
         const plan = planOf(id);
         const manual = Boolean(plan && plan.manual);
         const tr = document.createElement("tr");
         cell(tr, formatId(id), "mono");
-        cell(tr, plan ? (plan.command || "无命令") : "—", "mono");
+        cell(tr, manual ? "位置移动（非标定）" : plan ? plan.command : "—", "mono");
         cell(tr, plan ? String(plan.target) : "—", "mono");
         const current = cell(tr, "————", "mono");
         const actionTd = document.createElement("td");
@@ -1552,17 +1595,30 @@
         calibrate.textContent = "标定零位";
         calibrate.addEventListener("click", () => openCalibrateDialog(id));
         actionTd.append(calibrate);
+        let move = null;
+        let release = null;
         if (manual) {
-          // PSCK 只能映射成 1500，这两个轴的目标不是 1500，没有命令可用。
           calibrate.hidden = true;
-          const note = document.createElement("span");
-          note.className = "row-hint";
-          note.textContent = `目标 ${plan.target}，无命令可用，请到「舵机读数」页手动旋转舵盘对位`;
-          actionTd.append(note);
+          move = document.createElement("button");
+          move.type = "button";
+          move.className = "button tiny";
+          move.textContent = "移动到 2400";
+          move.setAttribute("aria-label", `${formatId(id)} 移动到 2400`);
+          move.addEventListener("click", () => openMoveDialog(id));
+          release = document.createElement("button");
+          release.type = "button";
+          release.className = "button tiny secondary";
+          release.textContent = "释力";
+          release.setAttribute("aria-label", `${formatId(id)} 释力`);
+          release.addEventListener("click", () => releaseMotionTorque(id));
+          const actions = document.createElement("div");
+          actions.className = "manual-id-row";
+          actions.append(move, release);
+          actionTd.append(actions);
         }
         tr.append(actionTd);
-        elements.zeroBody.append(tr);
-        state.rows.zero.set(id, { current, calibrate, manual });
+        (manual ? elements.moveBody : elements.zeroBody).append(tr);
+        state.rows.zero.set(id, { current, calibrate, manual, move, release });
       });
     }
 
@@ -1720,6 +1776,7 @@
       // 写入过程中不允许关闭弹窗，避免中途点掉后不知道写没写。
       elements.writeCancel.disabled = true;
       setWritingBusy(true);
+      if (descriptor.path === "/api/move_to_2400") elements.moveResult.textContent = "正在移动，等待回读验证…";
       const body = descriptor.body({ confirmText: elements.writeConfirm.value });
       const { payload } = await apiRequest(descriptor.path, {
         method: "POST",
@@ -1730,6 +1787,7 @@
       elements.writeExecute.disabled = false;
       elements.writeCancel.disabled = false;
       if (!payload) {
+        if (descriptor.path === "/api/move_to_2400") elements.moveResult.textContent = "移动结果未知，可能仍保持扭矩，请检查实物状态。";
         showDialogResult("请求失败或响应无法解析，详情见操作日志。", false);
         return;
       }
@@ -1751,6 +1809,10 @@
       }
       // 失败保留弹窗：确认文本写错这类情况，改一下就能重试，不该把窗关掉重开。
       const message = payload.error ? payload.error.message : "写入失败";
+      if (descriptor.path === "/api/move_to_2400") {
+        elements.moveResult.textContent = message;
+        if (payload.id) state.rows.zero.get(payload.id).current.textContent = payload.after ?? "————";
+      }
       showDialogResult(message, false);
       if (payload.partial) await descriptor.afterWrite?.(payload);
     }
@@ -1837,6 +1899,44 @@
           }
         },
       });
+    }
+
+    function openMoveDialog(id) {
+      if (!elements.moveDuration.reportValidity()) return;
+      const duration = Number(elements.moveDuration.value);
+      if (!Number.isInteger(duration) || duration < 500 || duration > 9999) return;
+      openWriteDialog({
+        title: `${formatId(id)} 移动到 2400`,
+        description: `仅移动 ${formatId(id)}，设定时间 ${duration} ms；不改写零位。`,
+        warning: "<strong>会实际驱动舵机。</strong> 确认路径无阻挡、手避开夹点。"
+          + " 到位后保持扭矩，可用旁边的「释力」按钮释放。"
+          + " 已确认的 V2.1.16STG 固件恢复扭矩不返回确认；工具核对固件和位置通信后继续，以最终 PWM 回读验证到位。",
+        expected: `MOVE ${formatId(id)} TO 2400`,
+        path: "/api/move_to_2400",
+        commands: () => [`#${formatId(id)}PULR!`, `#${formatId(id)}P2400T${String(duration).padStart(4, "0")}!`],
+        body: ({ confirmText }) => ({ id, duration_ms: duration, confirm_text: confirmText }),
+        describeSuccess: (payload) => `回读 ${payload.after}，目标 2400，容差 ±${payload.tolerance}`,
+        logLine: (payload) => `${formatId(id)} 已到 2400（回读 ${payload.after}），`
+          + (payload.torque_acknowledged ? "恢复扭矩收到确认" : "恢复扭矩无回包，已按确认的固件处理")
+          + "，未自动释力",
+        afterWrite: (payload) => {
+          state.rows.zero.get(id).current.textContent = String(payload.after);
+          elements.moveResult.textContent = `${formatId(id)} 到位验证通过：回读 ${payload.after}，容差 ±${payload.tolerance}；未自动释力。`
+            + (payload.torque_acknowledged ? "" : " 恢复扭矩无确认回包，实际保持力以实物为准。");
+        },
+      });
+    }
+
+    async function releaseMotionTorque(id) {
+      setWritingBusy(true);
+      const payload = await apiFetch("/api/release_torque", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      }, `${formatId(id)} 释力`);
+      setWritingBusy(false);
+      elements.moveResult.textContent = payload ? `${formatId(id)} 已收到释力确认，注意扶稳关节。`
+        : `${formatId(id)} 释力未确认，请检查实物状态。`;
+      if (payload) addLog(`${formatId(id)} 已释力`, "success");
     }
 
     function openCalibrateDialog(id) {

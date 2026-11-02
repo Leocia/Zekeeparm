@@ -1,10 +1,6 @@
-# Zekeeparm Python SDK 安装
+# Zekeep reBotArm Python SDK 安装
 
 工作区随附 SDK 源码：`zekeeparm_SDK`。控制接口由 Python 提供；Pinocchio 等依赖包含 C++ 原生库。
-
-SDK 仅保留 `config/rebotarm_dm.yaml`，默认直接读取 DM 配置。
-Python 导入统一为 `zekeeparm_SDK`；`RebotArm`、`RebotArmEndPose` 等类名保持不变。
-旧环境迁移时，先执行 `python -m pip uninstall rebotarm-control-py`，再按下方步骤安装新包。
 
 ## 功能特性
 
@@ -43,7 +39,7 @@ source tools/activate_ros.sh
 
 ### 视觉抓取环境
 
-先按[工作区说明](../README.md)创建 `rebotarm` 环境并完成视觉依赖安装，再执行：
+先按[可迁移安装说明](INSTALL_PORTABLE.md)创建 `rebotarm` 环境并完成视觉依赖安装，再执行：
 
 ```bash
 cd "$ZKEEP_WS"
@@ -55,7 +51,7 @@ python -m pip install --no-deps -e zekeeparm_SDK
 
 ### 独立遥操作环境
 
-`zekeep_teleop` 不安装 reBotArm SDK。它使用独立的 `motorbridge==0.4.9`；ROS 与视觉环境使用 `motorbridge==0.5.1`。
+`zekeep_teleop` 和 `zekeep_embodied` 不安装 reBotArm SDK。它们使用独立的 `motorbridge==0.4.9`；ROS 与视觉环境使用 `motorbridge==0.5.1`。
 
 ## 安装验证
 
@@ -94,16 +90,10 @@ python -c 'import sys; print(sys.executable)'
 python -m pip show zekeeparm-sdk motorbridge pin
 ```
 
-检查所有 SDK 模块、唯一 DM 配置和模型路径（不连接硬件）：
-
-```bash
-python -B tools/check_sdk.py
-```
-
 ## 项目使用
 
 - ROS 真机驱动由 `zekeepcontroller` 调用 SDK；安装和启动步骤见[控制器说明](../src/zekeepcontroller/README.md)。
-- 视觉抓取直接调用 SDK 并独占机械臂串口；用法见[视觉抓取说明](../src/rebot_grasp/README.md)。
+- 视觉抓取直接调用 SDK 并独占机械臂串口；用法见[视觉抓取说明](../src/zekeep_grasp/README.md)。
 - ROS 驱动和直接 SDK 抓取不可同时连接同一机械臂。
 - 串口权限使用 `dialout` 组，不要用 `chmod 777` 放宽设备权限。
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Low-latency Zhongling leader to zk_xm115 follower teleoperation."""
+"""Low-latency Zhongling leader to NEW_ROBOT_ID follower teleoperation."""
 
 import logging
 import time

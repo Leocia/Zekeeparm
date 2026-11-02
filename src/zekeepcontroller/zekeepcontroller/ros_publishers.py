@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from rclpy.node import Node
@@ -30,6 +31,8 @@ class JointStatePublisher:
     ) -> None:
         self._node = node
         self._hardware = hardware
+        self._feedback_lock = threading.Lock()
+        self._paused = False
         self._publisher = node.create_publisher(
             JointState,
             f"/{namespace}/joint_states",
@@ -72,8 +75,24 @@ class JointStatePublisher:
         )
         self.publish_status()
 
+    def pause(self) -> None:
+        """Drain feedback reads before the motor transport is closed."""
+        self._timer.cancel()
+        with self._feedback_lock:
+            self._paused = True
+
+    def resume(self) -> None:
+        with self._feedback_lock:
+            self._paused = False
+        self._timer.reset()
+
     def publish(self) -> None:
         """Read hardware feedback and publish current joint state."""
+        with self._feedback_lock:
+            if not self._paused:
+                self._publish()
+
+    def _publish(self) -> None:
         try:
             pos, vel, effort = self._hardware.get_joint_state()
         except Exception as exc:
@@ -133,6 +152,11 @@ class JointStatePublisher:
 
     def publish_status(self, *, read_hardware: bool = True) -> None:
         """Publish controller state and per-joint status codes."""
+        with self._feedback_lock:
+            if not self._paused:
+                self._publish_status(read_hardware=read_hardware)
+
+    def _publish_status(self, *, read_hardware: bool) -> None:
         msg = ArmStatus()
         msg.header.stamp = self._node.get_clock().now().to_msg()
         msg.mode = self._hardware.mode

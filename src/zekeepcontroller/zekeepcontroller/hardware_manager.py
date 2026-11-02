@@ -14,6 +14,7 @@ from .joint_mapping import joint_mapping_from_config
 
 _GRIPPER_GOAL_TOLERANCE_RAD = 0.12
 _GRIPPER_CLOSED_POSITION = 0.0
+_GRIPPER_FEEDBACK_LOWER_TOLERANCE_RAD = math.radians(1.0)
 
 
 def _load_gripper_grasp_profile(hardware_data):
@@ -125,6 +126,9 @@ class HardwareManager:
             self.gripper_grasp_timeout,
         ) = _load_gripper_grasp_profile(hardware_data)
         self._gripper_grasp_state: GripperGraspState | None = None
+        self._servo_gripper_grasp = False
+        self._servo_gripper_goal = None
+        self._servo_gripper_deadline = None
 
         self._robot = RebotArm(hw_yaml=str(hardware_config_path))
         self._arm_group = self._robot.groups.get("arm")
@@ -143,6 +147,9 @@ class HardwareManager:
         if self._gravity_feedforward_mask.shape != (len(self._arm_group.joint_names),):
             raise ValueError("gravity feedforward mask does not match arm joints")
         self._gripper_group = self._robot.groups.get("gripper")
+        if self._gripper_group is not None:
+            self._gripper_mit_kp = self._gripper_group._mit_kp.copy()
+            self._gripper_mit_kd = self._gripper_group._mit_kd.copy()
         self._joint_mapping = joint_mapping_from_config(
             hardware_data,
             self._arm_group.joint_names,
@@ -466,7 +473,7 @@ class HardwareManager:
                 self._enabled = False
             raise
 
-    def shutdown(self, disable_after_safe_home: bool = True) -> None:
+    def shutdown(self, disable_after_safe_home: bool = True, *, before_disconnect=None) -> None:
         if not self._connected:
             return
         with self._cmd_lock:
@@ -479,6 +486,8 @@ class HardwareManager:
                     raise RuntimeError("shutdown refused: enabled arm requires safe_home before disconnect")
                 self.safe_home()
                 self.disable()
+            if before_disconnect is not None:
+                before_disconnect()
             with self._cmd_lock:
                 self._robot.disconnect()
         except Exception as exc:
@@ -838,13 +847,26 @@ class HardwareManager:
         return self._motion_generation
 
     @_locked
-    def begin_servo_stream(self) -> None:
+    def begin_servo_stream(self, *, with_gripper=False, gripper_grasp=False) -> None:
         self._require_idle("servo stream")
+        if gripper_grasp and not with_gripper:
+            raise ValueError("gripper grasp servo requires gripper ownership")
+        if with_gripper and not self.has_gripper:
+            raise RuntimeError("gripper is not initialized")
         self.start_endpos_control()
+        holding = (gripper_grasp and self._gripper_grasp_state is not None
+                   and self._gripper_grasp_state.state == "holding")
+        if with_gripper and not holding:
+            self.stop_gripper_grasp()
+        self._servo_gripper_grasp = gripper_grasp
+        self._servo_gripper_goal = self.gripper_close_position if holding else None
+        self._servo_gripper_deadline = None
+        self._servo_gripper_active = with_gripper
+        self._servo_gripper_time = time.monotonic()
         self.set_state_machine("SERVO_RUNNING")
 
     @_locked
-    def set_servo_target(self, positions, velocities) -> None:
+    def set_servo_target(self, positions, velocities, *, gripper_position=None) -> None:
         if self._state_machine != "SERVO_RUNNING":
             raise RuntimeError("servo command received while servo stream is inactive")
         target = np.asarray(positions, dtype=np.float64).reshape(-1)
@@ -854,18 +876,102 @@ class HardwareManager:
         if not np.all(np.isfinite(target)) or not np.all(np.isfinite(velocity)):
             raise ValueError("servo command contains non-finite values")
         self._joint_mapping.validate_positions(target)
+        limited_velocity = self._joint_mapping.clamp_velocities(velocity)
+        grasp_mode = getattr(self, "_servo_gripper_grasp", False)
+        if gripper_position is not None:
+            if not self.has_gripper:
+                raise RuntimeError("gripper is not initialized")
+            gripper_position = float(gripper_position)
+            low, high = sorted((self.gripper_close_position, self.gripper_open_position))
+            if not np.isfinite(gripper_position) or not low <= gripper_position <= high:
+                raise ValueError("servo gripper target outside configured open/close limits")
+            self._gripper_mapping.validate_positions([gripper_position])
+            if grasp_mode and not any(math.isclose(gripper_position, endpoint, rel_tol=0, abs_tol=1e-9)
+                                      for endpoint in (self.gripper_close_position, self.gripper_open_position)):
+                raise ValueError("gripper grasp servo accepts only calibrated open/close endpoints")
+        if grasp_mode:
+            if self._update_servo_gripper_grasp(gripper_position):
+                # Match joystick demonstrations: hold the arm until the gripper transition finishes.
+                self._endpos_ctrl._qd_target[:] = 0.0
+                return
+        elif gripper_position is not None:
+            now = time.monotonic()
+            dt = min(max(0.0, now - self._servo_gripper_time), 0.2)
+            step = float(self._gripper_mapping.ros_velocity_limits[0]) * dt
+            previous = (self._endpos_ctrl._gripper_target if self._servo_gripper_active
+                        else self.get_gripper_state()[0])
+            previous = self._gripper_feedback_target(previous)
+            gripper_position = float(np.clip(gripper_position, previous - step, previous + step))
+            self._gripper_grasp_state = None
+            self._endpos_ctrl.set_gripper_target(gripper_position)
+            self._gripper_target_position = gripper_position
+            self._servo_gripper_active = True
+            self._servo_gripper_time = now
         self._endpos_ctrl._q_target[:] = target
-        self._endpos_ctrl._qd_target[:] = self._joint_mapping.clamp_velocities(velocity)
+        self._endpos_ctrl._qd_target[:] = limited_velocity
+
+    def _update_servo_gripper_grasp(self, requested) -> bool:
+        """Advance the owned gripper state; return whether the arm must wait."""
+        now = time.monotonic()
+        position = self._gripper_feedback_target(self.get_gripper_state()[0])
+        if requested is not None and requested != self._servo_gripper_goal:
+            if math.isclose(requested, self.gripper_close_position, rel_tol=0, abs_tol=1e-9):
+                self._start_gripper_grasp()
+                requested = self.gripper_close_position
+            else:
+                self.stop_gripper_grasp()
+                requested = self.gripper_open_position
+            self._servo_gripper_goal = requested
+            self._servo_gripper_deadline = now + self.gripper_grasp_timeout
+        if self._servo_gripper_goal is None:
+            return False
+        if self._servo_gripper_goal == self.gripper_close_position:
+            # Keep a validated hold fallback current while torque control owns the output.
+            self._endpos_ctrl.set_gripper_target(position)
+            done, _, state, *_ = self.get_gripper_grasp_status()
+            grasp = self._gripper_grasp_state
+            if (state == "empty" and abs(grasp.start_position - self.gripper_close_position)
+                    > self._gripper_grasp_config.hard_stop_margin_rad):
+                raise RuntimeError("servo gripper empty grasp; holding arm")
+            busy = not done
+        else:
+            dt = min(max(0.0, now - self._servo_gripper_time), 0.2)
+            step = float(self._gripper_mapping.ros_velocity_limits[0]) * dt
+            previous = self._gripper_feedback_target(self._endpos_ctrl._gripper_target)
+            target = float(np.clip(self.gripper_open_position, previous - step, previous + step))
+            self._endpos_ctrl.set_gripper_target(target)
+            self._gripper_target_position = target
+            busy = abs(position - self.gripper_open_position) >= _GRIPPER_GOAL_TOLERANCE_RAD
+        self._servo_gripper_time = now
+        if busy and self._servo_gripper_deadline is not None and now >= self._servo_gripper_deadline:
+            raise RuntimeError("servo gripper transition timed out; holding arm")
+        if not busy:
+            self._servo_gripper_deadline = None
+        return busy
 
     @_locked
     def stop_servo_stream(self) -> None:
         if self._state_machine != "SERVO_RUNNING":
             return
         try:
-            self._endpos_ctrl._q_target[:] = self.get_joint_positions(request=True)
+            hold = self.get_joint_positions(request=True)
+            self._joint_mapping.validate_positions(hold)
+            self._endpos_ctrl._q_target[:] = hold
         except Exception:
             pass  # Keep last accepted position as hold target if feedback is unavailable.
         self._endpos_ctrl._qd_target[:] = 0.0
+        if getattr(self, "_servo_gripper_active", False):
+            try:
+                holding = (getattr(self, "_servo_gripper_grasp", False)
+                           and self._gripper_grasp_state is not None
+                           and self._gripper_grasp_state.state == "holding")
+                if not holding:
+                    self.stop_gripper_grasp()
+            except Exception:
+                pass  # Retain the last validated gripper target if feedback is unavailable.
+            self._servo_gripper_active = False
+        self._servo_gripper_grasp = False
+        self._servo_gripper_goal = self._servo_gripper_deadline = None
         self.set_state_machine("IDLE")
 
     @property
@@ -944,6 +1050,18 @@ class HardwareManager:
             except Exception:
                 codes.append(0)
         return codes
+
+    def get_motor_feedback_errors(self) -> list[str]:
+        errors = []
+        for joint in self._robot._all_joints:
+            state = self._robot._motor_map[joint.name].get_state()
+            # Damiao reports DISABLED=0 and ENABLED=1; neither is a fault.
+            valid_codes = (0, 1) if joint.vendor == "damiao" else (0,)
+            if state is None:
+                errors.append(f"{joint.name}: no feedback")
+            elif int(state.status_code) not in valid_codes:
+                errors.append(f"{joint.name}: status=0x{int(state.status_code):02X}")
+        return errors
 
     # ------------------------------------------------------------------
     # gravity compensation
@@ -1300,6 +1418,9 @@ class HardwareManager:
         target = float(position)
         self._gripper_mapping.validate_positions([target])
         self._gripper_grasp_state = None
+        # Free MIT mode clears these gains; restore configured position gains.
+        self._gripper_group._mit_kp = self._gripper_mit_kp.copy()
+        self._gripper_group._mit_kd = self._gripper_mit_kd.copy()
         self._endpos_ctrl.set_gripper_target(target)
         self._gripper_group.send_mit(
             self._gripper_mapping.positions_to_motor([target]),
@@ -1352,6 +1473,14 @@ class HardwareManager:
         pos = self.get_gripper_state()[0]
         return abs(pos - self._gripper_target_position) < _GRIPPER_GOAL_TOLERANCE_RAD
 
+    def _gripper_feedback_target(self, position: float) -> float:
+        """Validate feedback and form an in-range hold target near the closed stop."""
+        low = self._gripper_mapping.calibrations[0].hard_lower
+        if low - _GRIPPER_FEEDBACK_LOWER_TOLERANCE_RAD <= position < low:
+            position = low
+        self._gripper_mapping.validate_positions([position])
+        return position
+
     @_locked
     def start_gripper_grasp(
         self,
@@ -1359,6 +1488,9 @@ class HardwareManager:
         hold_torque: float = 0.0,
     ) -> None:
         self._begin_gripper_command(allow_endpos=True)
+        self._start_gripper_grasp(closing_torque, hold_torque)
+
+    def _start_gripper_grasp(self, closing_torque=0.0, hold_torque=0.0) -> None:
         state = GripperGraspState(self._gripper_grasp_config)
         state.start(
             self.get_gripper_state()[0],
@@ -1402,6 +1534,7 @@ class HardwareManager:
             if state is None:
                 raise
             position = state.contact_position
+        position = self._gripper_feedback_target(position)
         self._endpos_ctrl.set_gripper_target(position)
         self._gripper_target_position = position
 
@@ -1473,11 +1606,7 @@ class HardwareManager:
         missing: list[str] = []
         while True:
             self._robot_get_state(request_feedback=True)
-            missing = []
-            for name in self._robot.joint_names:
-                state = self._robot._motor_map[name].get_state()
-                if state is None or int(state.status_code) != 0:
-                    missing.append(name)
+            missing = self.get_motor_feedback_errors()
             if not missing or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
@@ -1494,7 +1623,7 @@ class HardwareManager:
             gripper_position = self._gripper_mapping.positions_to_ros(
                 self._gripper_group.get_positions(request_feedback=False)
             )
-            self._gripper_mapping.validate_positions(gripper_position)
+            self._gripper_feedback_target(float(gripper_position[0]))
 
     def _begin_lowlevel_streaming(self, required_mode: str) -> None:
         self._require_motion_available()
@@ -1578,8 +1707,6 @@ class HardwareManager:
                 if not ok:
                     mode = "mit" if self._gravity_feedforward_mask[index] else "pos_vel"
                     raise RuntimeError(f"{name} did not enter {mode} mode")
-            for group in self._hybrid_arm_groups.values():
-                group.enable()
         else:
             if self._arm_control_mode == "mit":
                 ok = self._arm_group.mode_mit(
@@ -1594,10 +1721,16 @@ class HardwareManager:
             if not ok:
                 mode = "mit" if self._arm_control_mode == "mit" else "pos_vel"
                 raise RuntimeError(f"arm did not enter {mode} mode")
-            self._arm_group.enable()
         if self.has_gripper:
             if not self._gripper_group.mode_mit():
                 raise RuntimeError("gripper did not enter mit mode")
+        # SDK group.enable() enables every motor of that vendor, including the gripper.
+        if self._hybrid_arm_groups:
+            for group in self._hybrid_arm_groups.values():
+                group.enable()
+        else:
+            self._arm_group.enable()
+        if self.has_gripper:
             self._gripper_group.enable()
 
     def _endpos_modes_ready(self) -> bool:

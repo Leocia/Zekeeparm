@@ -16,8 +16,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/MoveToPoseIK.srv"
   "srv/SetGripper.srv"
   "srv/GripperCommand.srv"
+  "srv/WebTeachCommand.srv"
+  "srv/WebTaskLease.srv"
   "action/MoveToPose.action"
   "action/GripperGrasp.action"
+  "action/WebGrasp.action"
+  "action/WebManipulate.action"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
 

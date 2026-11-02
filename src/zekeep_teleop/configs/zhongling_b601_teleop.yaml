@@ -1,7 +1,7 @@
 robot:
   type: seeed_b601_dm_follower
   port: /dev/ttyACM0
-  id: zk_xm115
+  id: ""  # Set a new follower identity before calibration.
   can_adapter: damiao
   joint_directions:
     shoulder_pan: 1
@@ -14,7 +14,8 @@ robot:
   joint_limits:
     shoulder_pan: [-149.54, 149.54]
     shoulder_lift: [-211.99, 0.0]
-    elbow_flex: [-211.99, 0.0]
+    # ROS J3 lower=-0.01 rad with direction=-1 permits motor angles up to +0.573 deg.
+    elbow_flex: [-211.99, 0.57]
     wrist_flex: [-89.95, 89.95]
     wrist_yaw: [-89.95, 89.95]
     wrist_roll: [-89.95, 89.95]
@@ -25,13 +26,13 @@ robot:
 teleop:
   type: zhongling_leader
   port: /dev/ttyUSB0
-  id: zhongling
+  id: ""  # Set a new leader identity before calibration.
   servo_ids: [1, 2, 3, 4, 5, 6, 7]
   joint_names: [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_yaw, wrist_roll, gripper]
-  # Confirmed on the physical arm. Do not restore the earlier -1 values for IDs 002/003.
+  # Model direction template; verify on the new leader before following.
   joint_directions: [1, 1, 1, -1, -1, 1, 1]
-  # ID 003: startup PWM 2370 to PWM 1750 corresponds to -90 degrees.
-  joint_degrees_per_pwm: [null, null, 0.14754098360655737, null, null, null, null]
+  # Measure device-specific PWM-to-angle scales on the new leader.
+  joint_degrees_per_pwm: [null, null, null, null, null, null, null]
   joint_ranges_deg:
     - [-149.54, 149.54]
     - [-265.78125, 0.0]

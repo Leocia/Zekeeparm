@@ -16,6 +16,7 @@ from zekeep_msgs.srv import GripperCommand
 from zekeep_msgs.action import GripperGrasp
 
 from .mapping import integrate_positions, joint_velocities
+from .gripper_jog import GripperJog
 
 
 class JoystickController(Node):
@@ -29,12 +30,14 @@ class JoystickController(Node):
             "joint_names": [f"joint{i}" for i in range(1, 7)],
             "axis_indices": [0, 1, 4, 3, 6, 7],
             "axis_signs": [1.0] * 6,
-            "max_speeds": [0.25] * 6,
+            "max_speeds": [0.5] * 6,
             "lower_limits": [-2.58, 0.0, 0.0, -1.57, -1.57, -1.57],
             "upper_limits": [2.58, 3.7, 3.7, 1.57, 1.57, 1.57],
             "deadman_button": 4,
             "close_button": 0,
             "open_button": 1,
+            "safe_home_button": 2,
+            "return_ready_modifier_button": 5,
             "deadzone": 0.12,
             "publish_rate": 50.0,
             "joy_timeout": 0.3,
@@ -55,6 +58,8 @@ class JoystickController(Node):
         self.deadman_button = int(self.get_parameter("deadman_button").value)
         self.close_button = int(self.get_parameter("close_button").value)
         self.open_button = int(self.get_parameter("open_button").value)
+        self.safe_home_button = int(self.get_parameter("safe_home_button").value)
+        self.return_ready_modifier_button = int(self.get_parameter("return_ready_modifier_button").value)
         self.deadzone = float(self.get_parameter("deadzone").value)
         self.publish_rate = float(self.get_parameter("publish_rate").value)
         self.joy_timeout = float(self.get_parameter("joy_timeout").value)
@@ -66,11 +71,16 @@ class JoystickController(Node):
         self._validate_parameters()
 
         root = f"/{self.namespace}"
+        self.gripper_jog = GripperJog(
+            self, root, self.publish_rate, self.joy_timeout, open_axis=2, close_axis=5
+        )
         self.publisher = self.create_publisher(
             JointTrajectory, root + "/servo_joint_trajectory", 10
         )
         self.start_client = self.create_client(Trigger, root + "/servo/start")
         self.stop_client = self.create_client(Trigger, root + "/servo/stop")
+        self.safe_home_client = self.create_client(Trigger, root + "/safe_home")
+        self.return_ready_client = self.create_client(Trigger, root + "/return_ready")
         self.open_client = self.create_client(GripperCommand, root + "/gripper/open")
         self.close_client = ActionClient(self, GripperGrasp, root + "/gripper/grasp")
         self.create_subscription(
@@ -94,7 +104,7 @@ class JoystickController(Node):
         self.last_feedback_time = 0.0
         self.targets: list[float] | None = None
         self.state = "idle"
-        self.pending_gripper = None
+        self.pending_after_stop = None
         self.require_deadman_release = False
         self.last_tick = time.monotonic()
         self.get_logger().info(
@@ -102,6 +112,10 @@ class JoystickController(Node):
         )
 
     def _validate_parameters(self) -> None:
+        if self.return_ready_modifier_button < 0 or self.return_ready_modifier_button in {
+            self.deadman_button, self.close_button, self.open_button, self.safe_home_button,
+        }:
+            raise ValueError("return_ready_modifier_button must be an unused nonnegative button index")
         vectors = (
             self.joint_names,
             self.axis_indices,
@@ -118,7 +132,8 @@ class JoystickController(Node):
             raise ValueError("arm_namespace must not be empty")
         if any(index < 0 for index in self.axis_indices):
             raise ValueError("axis_indices must be nonnegative")
-        if min(self.deadman_button, self.close_button, self.open_button) < 0:
+        if min(self.deadman_button, self.close_button, self.open_button,
+               self.safe_home_button) < 0:
             raise ValueError("button indices must be nonnegative")
         if any(speed <= 0.0 for speed in self.max_speeds):
             raise ValueError("max_speeds must be positive")
@@ -158,7 +173,16 @@ class JoystickController(Node):
         deadman = self._button(self.deadman_button)
         if not deadman:
             self.require_deadman_release = False
-        if deadman and not (self._button(self.close_button) and self._button(self.open_button)):
+        if self._rising(previous, self.safe_home_button):
+            if self._button(self.return_ready_modifier_button):
+                self._request_operation(
+                    self._return_pose, "before return_ready", self.return_ready_client, "return_ready"
+                )
+            else:
+                self._request_operation(
+                    self._return_pose, "before safe_home", self.safe_home_client, "safe_home"
+                )
+        elif deadman and not (self._button(self.close_button) and self._button(self.open_button)):
             if self._rising(previous, self.close_button):
                 self._request_gripper(self.close_client, "close")
             elif self._rising(previous, self.open_button):
@@ -196,6 +220,11 @@ class JoystickController(Node):
             return
 
         dt = min(now - self.last_tick, 2.0 / self.publish_rate)
+        try:
+            self.gripper_jog.update(self.axes, now)
+        except ValueError as exc:
+            self._stop_stream(str(exc))
+            return
         self.last_tick = now
         velocities = joint_velocities(
             self.axes,
@@ -216,6 +245,7 @@ class JoystickController(Node):
         point = JointTrajectoryPoint()
         point.positions = self.targets
         point.velocities = velocities
+        self.gripper_jog.append(message, point)
         message.points = [point]
         self.publisher.publish(message)
 
@@ -234,6 +264,7 @@ class JoystickController(Node):
             if not response.success:
                 raise RuntimeError(response.message)
             self.targets = list(self.feedback)
+            self.gripper_jog.reset()
             self.last_tick = time.monotonic()
             self.state = "active"
             self.get_logger().info("joystick control active")
@@ -246,7 +277,7 @@ class JoystickController(Node):
         self.state = "stopping"
         self.targets = None
         if not self.stop_client.service_is_ready():
-            self.pending_gripper = None
+            self.pending_after_stop = None
             self.state = "idle"
             self.require_deadman_release = True
             self.get_logger().error(
@@ -257,8 +288,8 @@ class JoystickController(Node):
         future.add_done_callback(lambda result: self._on_stopped(result, reason))
 
     def _on_stopped(self, future, reason: str) -> None:
-        pending = self.pending_gripper
-        self.pending_gripper = None
+        pending = self.pending_after_stop
+        self.pending_after_stop = None
         self.state = "idle"
         self.require_deadman_release = True
         try:
@@ -270,16 +301,49 @@ class JoystickController(Node):
             self.get_logger().error(f"servo stop failed; driver watchdog will hold: {exc}")
             return
         if pending is not None:
-            self._command_gripper(*pending)
+            callback, args = pending
+            callback(*args)
+
+    def _request_operation(self, callback, reason: str, *args) -> None:
+        if self.state == "active":
+            self.pending_after_stop = (callback, args)
+            self._stop_stream(reason)
+        elif self.state == "idle":
+            callback(*args)
+        else:
+            self.get_logger().warn("control transition or operation busy; release LB and retry")
 
     def _request_gripper(self, client, label: str) -> None:
-        if self.state == "active":
-            self.pending_gripper = (client, label)
-            self._stop_stream(f"before gripper {label}")
-        elif self.state == "idle":
-            self._command_gripper(client, label)
-        else:
-            self.get_logger().warn("control transition or gripper busy; press A/B again when idle")
+        self._request_operation(
+            self._command_gripper, f"before gripper {label}", client, label
+        )
+
+    def _return_pose(self, client, operation: str) -> None:
+        if not client.service_is_ready():
+            self.require_deadman_release = True
+            self.get_logger().warn(f"{operation} unavailable")
+            return
+        self.state = operation
+        self.require_deadman_release = True
+        try:
+            client.call_async(Trigger.Request()).add_done_callback(
+                lambda future: self._on_returned(future, operation)
+            )
+            self.get_logger().info(f"{operation} requested; waiting for collision-checked motion")
+        except Exception as exc:
+            self.state = "idle"
+            self.get_logger().error(f"{operation} request failed: {exc}")
+
+    def _on_returned(self, future, operation: str) -> None:
+        self.state = "idle"
+        self.require_deadman_release = True
+        try:
+            response = future.result()
+            if not response.success:
+                raise RuntimeError(response.message)
+            self.get_logger().info(f"{operation} complete; release LB before joint control")
+        except Exception as exc:
+            self.get_logger().error(f"{operation} failed: {exc}")
 
     def _command_gripper(self, client, label: str) -> None:
         if label == "close":

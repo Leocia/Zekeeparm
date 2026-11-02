@@ -1,0 +1,61 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 0.1
+      Plane Cell Count: 20
+    - Class: moveit_rviz_plugin/RobotState
+      Enabled: true
+      Name: Measured start pose
+      Robot Description: robot_description
+      Robot State Topic: /pi05_preview/state
+      Robot Alpha: 0.8
+    - Class: moveit_rviz_plugin/Trajectory
+      Enabled: true
+      Name: Raw prediction - NOT executable
+      Robot Description: robot_description
+      Trajectory Topic: /pi05_preview/trajectory
+      Robot Alpha: 0.25
+      Color Enabled: true
+      Robot Color: 70; 180; 240
+      Show Robot Visual: true
+      Show Robot Collision: false
+      Show Trail: true
+      Trail Step Size: 1
+      # Uniform 9 Hz preview: fixed waypoint timing avoids Humble's realtime-factor end-index path.
+      State Display Time: 0.111111s
+      Loop Animation: false
+      Interrupt Display: false
+  Enabled: true
+  Global Options:
+    Fixed Frame: base_link
+    Background Color: 48; 48; 48
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 1.3
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0.25
+      Name: Current View
+      Pitch: 0.5
+      Target Frame: base_link
+      Yaw: 0.8
+    Saved: ~
+Window Geometry:
+  Height: 900
+  Width: 1400
