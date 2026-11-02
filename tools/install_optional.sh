@@ -12,6 +12,10 @@ case "$module" in
   *) printf '未知选装模块：%s\n' "$module" >&2; exit 2 ;;
 esac
 cd -- "$workspace_dir"
+if [[ "$module" == studio && ! -f apps/studio/environment.yml ]]; then
+  printf 'Studio 未随 GitHub 仓库发布；请先另行准备 apps/studio 源码。\n' >&2
+  exit 1
+fi
 if [[ "$module" == web-sim || "$module" == studio ]]; then
   for tool in node npm; do
     command -v "$tool" >/dev/null || { printf '先在当前终端安装 Node.js 和 npm：缺少 %s\n' "$tool" >&2; exit 1; }

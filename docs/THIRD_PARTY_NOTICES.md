@@ -7,6 +7,6 @@
 - GraspNet 源码、checkpoint 不随包分发。安装器保留许可确认，下载前须阅读 [GraspNet License](https://github.com/graspnet/graspnet-baseline/blob/main/LICENSE)；不接受时跳过。
 - `web_mujoco` 记录的网页实现来源为 [Rebot_Arm_AGV](https://github.com/Yang-Ci/Rebot_Arm_AGV/tree/445b48d5fd9fef8050c8a9ef5fd6ab32e3ace5cf/web_mujoco)，保留目录 README 的来源信息。
 - π0.5 与 tokenizer 可能需要登录和接受模型许可；凭据由部署者自行配置，不随源码保存。
-- Studio 的浏览器依赖通过 `npm ci` 获取，不附 node_modules；Windows 打包脚本保留，但本次仅面向 Ubuntu 验证。
+- Studio 为独立应用，不随本 GitHub 仓库发布；其依赖和许可由独立应用说明。
 
 本次操作只整理本地交付包，没有上传、发布或向第三方发送文件。

@@ -69,7 +69,9 @@ npm run dev
 访问 `http://127.0.0.1:5174`。模型来自 `web_mujoco/robot`，导出资源在安装/构建时生成。
 不连接机械臂，不需要 ROS。见 [网页仿真说明](../web_mujoco/README.md)。
 
-## Studio
+## Studio（独立提供）
+
+Studio 源码不随 GitHub 仓库发布。另行取得后，先将目录放到 `apps/studio/`，再执行以下安装步骤。
 
 当前 Blockly 依赖要求较新的 Node.js 与 npm：可用 Node.js 22.22.2+（22.x）、24.15+（24.x）或 26+。
 安装器用 `npm ci --engine-strict` 核对锁定依赖的实际要求；先在当前终端准备这两个工具。
@@ -79,5 +81,5 @@ bash tools/install_optional.sh studio
 bash tools/env.sh studio python apps/studio/studio.py
 ```
 
-默认启动行为与模拟/真机选择见 [Studio 说明](../apps/studio/README.md)。
+默认启动行为与模拟/真机选择见另行提供的 `apps/studio/README.md`。
 浏览器依赖通过 npm 安装；原 SDK 和硬件接口保留。Windows 打包仍属未验证范围。

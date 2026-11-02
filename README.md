@@ -68,7 +68,7 @@ ACCEPT_GRASPNET_LICENSE=YES bash tools/download_models.sh graspnet
 | ACT、π0.5（选装） | `tools/act.sh`、`tools/pi05-model.sh`；兼容 `tools/pi05.sh` |
 | ROS MuJoCo（选装） | `zekeep_sim`，独立命名空间 `/zekeep_sim` |
 | 独立网页仿真（选装） | `web_mujoco/`，不依赖真机或 ROS |
-| 积木编程 Studio（选装） | `apps/studio/` |
+| 积木编程 Studio（独立提供） | `apps/studio/`，不随 GitHub 仓库发布 |
 | 底层 SDK | `zekeeparm_SDK/` |
 
 ```bash

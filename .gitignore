@@ -43,3 +43,6 @@ web_mujoco/dist/
 apps/studio/public/vendor/
 playwright-report/
 test-results/
+
+# Standalone applications are delivered separately.
+/apps/

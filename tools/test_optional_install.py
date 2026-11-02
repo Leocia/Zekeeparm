@@ -18,6 +18,7 @@ class OptionalInstallTest(unittest.TestCase):
             (root / 'tools/activate_ros.sh').write_text('export PATH="$TEST_BIN:$PATH"\n')
             for folder in ('apps/studio', 'web_mujoco', '.venv-ros/bin', 'forge/bin', 'bin'):
                 (root / folder).mkdir(parents=True)
+            (root / 'apps/studio/environment.yml').write_text('name: zekeep-studio\n')
             stub = root / 'stub.py'
             stub.write_text('''#!/usr/bin/python3
 import json, os, sys
@@ -51,6 +52,12 @@ if name == 'python3' and args[:2] == ['-m', 'venv']:
                     expected = {'collect': 'requirements-embodied.txt', 'models': 'requirements-models.txt',
                                 'sim': 'zekeep_sim', 'web-sim': 'build', 'studio': 'environment.yml'}[module]
                     self.assertIn(expected, text)
+            (root / 'apps/studio/environment.yml').unlink()
+            log.write_text('')
+            result = subprocess.run(['bash', str(entry), 'studio'], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('未随 GitHub', result.stderr)
+            self.assertEqual(log.read_text(), '')
             self.assertEqual(subprocess.run(['bash', str(entry), '--help'], capture_output=True).returncode, 0)
             self.assertEqual(subprocess.run(['bash', str(entry), 'unknown'], capture_output=True).returncode, 2)
 
