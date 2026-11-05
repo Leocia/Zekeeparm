@@ -29,5 +29,5 @@ for name in ("pointnet2", "knn"):
                     ignore=shutil.ignore_patterns("build", "dist", "*.so", "*.o", "*.egg-info", "__pycache__"))
 COPY
 python -m pip install --no-build-isolation --no-deps "$build_dir/pointnet2" "$build_dir/knn"
-python -c 'import pointnet2._ext; import knn_pytorch; import torch; print(torch.__version__, torch.version.cuda)'
+python -c 'import torch; import pointnet2._ext; from knn_pytorch import knn_pytorch; print(torch.__version__, torch.version.cuda)'
 printf 'Build sources retained for diagnostics: %s\n' "$build_dir"

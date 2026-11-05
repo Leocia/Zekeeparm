@@ -9,7 +9,7 @@ set -eo pipefail
 profile="${1:-help}"
 case "$profile" in
   help|-h|--help)
-    printf '%s\n' '用法：bash tools/env.sh <base|ros|vision|teleop|vla|model|act|studio> [命令及参数]'
+    printf '%s\n' '用法：bash tools/env.sh <base|ros|vision|teleop|vla|model|act> [命令及参数]'
     printf '%s\n' '省略命令时进入子终端，exit 返回；base 可在环境尚未安装时使用。'
     exit 0 ;;
   base|ros|vision|teleop|vla|model|act|studio) shift ;;
@@ -17,9 +17,7 @@ case "$profile" in
 esac
 
 export ZKEEP_WS="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-export ZKEEP_MINIFORGE_DIR="${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}"
-export EMBODIED_PYTHON="${EMBODIED_PYTHON:-$ZKEEP_MINIFORGE_DIR/envs/embodied/bin/python}"
-export ZKEEP_VISION_PYTHON="${ZKEEP_VISION_PYTHON:-$ZKEEP_MINIFORGE_DIR/envs/rebotarm/bin/python}"
+source "$ZKEEP_WS/tools/environment.sh"
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH PYTHONHOME LD_LIBRARY_PATH AMENT_PREFIX_PATH CMAKE_PREFIX_PATH COLCON_PREFIX_PATH
 unset VIRTUAL_ENV CONDA_PREFIX CONDA_DEFAULT_ENV CONDA_SHLVL

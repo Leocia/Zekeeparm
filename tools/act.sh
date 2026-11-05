@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
-export ZKEEP_VISION_PYTHON="${ZKEEP_VISION_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/rebotarm/bin/python}"
 workspace_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$workspace_dir/tools/environment.sh"
 export ROS_LOCALHOST_ONLY="${ROS_LOCALHOST_ONLY:-1}"
 command="${1:-help}"
 if (($#)); then shift; fi

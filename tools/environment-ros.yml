@@ -1,0 +1,11 @@
+name: zekeep-ros
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.10
+  - numpy=1.26.4
+  - pinocchio=3.9.0
+  - pip
+  - setuptools<80
+  - wheel

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 workspace_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$workspace_dir/tools/environment.sh"
 module="${1:-help}"
 case "$module" in
   help|-h|--help)
-    printf '%s\n' '用法：bash tools/install_optional.sh collect|models|sim|web-sim|studio' \
+    printf '%s\n' '用法：bash tools/install_optional.sh collect|models|sim|web-sim' \
       '按需安装依赖；不会下载模型权重、连接设备或执行 sudo。' \
       '先完成基础 setup.sh；web-sim 另需当前终端可用的 Node.js 22+。'
     exit 0 ;;
@@ -29,7 +30,7 @@ create_conda() {
   local prefix="$1"
   [[ -x "$conda" ]] || { printf '缺少 Conda：%s\n' "$conda" >&2; exit 1; }
   if [[ ! -f "$prefix/conda-meta/history" ]]; then
-    "$conda" create -p "$prefix" python=3.10 -y
+    "$conda" create --override-channels -c conda-forge -p "$prefix" python=3.10 -y
   fi
 }
 case "$module" in
@@ -54,16 +55,17 @@ case "$module" in
       'import torch, torchvision; from torchcodec.decoders import VideoDecoder; from lerobot.policies.pi05.modeling_pi05 import PI05Policy; from zekeep_act import cli; print("ACT/pi0.5 imports: OK")'
     ;;
   sim)
-    [[ -x .venv-ros/bin/python ]] || { printf '先运行 setup.sh 创建 ROS 环境。\n' >&2; exit 1; }
-    .venv-ros/bin/python -m pip install mujoco==3.10.0
+    ros_venv="${ZKEEP_ROS_VENV:-$workspace_dir/.venv-ros}"
+    [[ -x "$ros_venv/bin/python" ]] || { printf '先运行 setup.sh 创建 ROS 环境：%s\n' "$ros_venv" >&2; exit 1; }
     set +u
     source tools/activate_ros.sh
     set -u
+    "$ros_venv/bin/python" -m pip install mujoco==3.10.0
     python -m colcon build --base-paths src --packages-select zekeep_sim --symlink-install
     ;;
   web-sim)
     node -e 'if (Number(process.versions.node.split(".")[0]) < 22) { console.error("需要 Node.js 22+"); process.exit(1); }'
-    python3 -m venv web_mujoco/.venv
+    /usr/bin/python3 -m venv web_mujoco/.venv
     web_mujoco/.venv/bin/python -m pip install -r web_mujoco/requirements.txt
     export PATH="$workspace_dir/web_mujoco/.venv/bin:$PATH"
     (cd web_mujoco && npm ci --engine-strict && npm run build)

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-export ZKEEP_VISION_PYTHON="${ZKEEP_VISION_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/rebotarm/bin/python}"
 package_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 workspace_dir="$(cd -- "$package_dir/../.." && pwd)"
+source "$workspace_dir/tools/environment.sh"
 # ACT and pi0.5 share the LeRobot 0.4.4 model environment; ROS stays isolated.
 runtime="${LEROBOT_PYTHON:-${ACT_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/act/bin/python}}"
 export PYTHONPATH="$package_dir/src:$workspace_dir/src/zekeep_act/src"

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -eo pipefail
-export ZKEEP_VISION_PYTHON="${ZKEEP_VISION_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/rebotarm/bin/python}"
 package_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 workspace_dir="$(cd -- "$package_dir/../.." && pwd)"
+source "$workspace_dir/tools/environment.sh"
 runtime="${EMBODIED_PYTHON:-${ZKEEP_MINIFORGE_DIR:-$HOME/miniforge3}/envs/embodied/bin/python}"
 
 # Keep ROS message packages while avoiding Python packages from unrelated overlays.

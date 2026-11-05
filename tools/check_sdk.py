@@ -1,6 +1,7 @@
 """Check SDK imports, DM defaults, and model paths without connecting hardware."""
 
 import importlib
+from importlib.metadata import version
 import inspect
 from pathlib import Path
 import pkgutil
@@ -25,6 +26,9 @@ from drivers.robot.grasp_driver import (
 
 
 def main():
+    assert version("numpy") == "1.26.4", "SDK requires NumPy 1.26.4; see docs/SDK_INSTALL.md"
+    assert version("pin") == "3.9.0", "SDK requires Conda Pinocchio 3.9.0; see docs/SDK_INSTALL.md"
+    assert version("motorbridge") == "0.5.1", "SDK requires MotorBridge 0.5.1; see docs/SDK_INSTALL.md"
     assert Path(zekeeparm_SDK.__file__).resolve().parent == SDK_ROOT / "zekeeparm_SDK"
     for module in pkgutil.walk_packages(zekeeparm_SDK.__path__, "zekeeparm_SDK."):
         importlib.import_module(module.name)
