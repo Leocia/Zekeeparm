@@ -52,6 +52,7 @@ PyTorch 的 cu128 wheel 属于 Python 环境依赖，仍由相应安装入口安
 `third_party/` 随包保留说明文件；基础安装完成后，按 [GraspNet 独立安装步骤](third_party/README.md)单独获取源码、安装依赖、构建并验证。
 其本地 CUDA 扩展需要上述 GPU 环境；无需重跑基础安装器。
 其余安装边界见 [安装说明](docs/INSTALL_PORTABLE.md)。
+另有用户反馈的 [Qt 插件冲突待排查](docs/INSTALL_PORTABLE.md#已知安装问题待处理)，尚未确认原因或修复。
 
 ## 整套环境的安装顺序
 
