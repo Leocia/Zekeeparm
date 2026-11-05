@@ -539,6 +539,19 @@ class GraspDriver:
             self._position_reached = False
             self._grasp_result = None
 
+    def hold_current(self) -> None:
+        """Freeze position motion while preserving an existing contact hold."""
+        with self._state_lock:
+            if self._state == self._STATE_HOLDING:
+                return
+            state = self._read_gripper_state_cached()
+            if state is None or not np.all(np.isfinite(state)):
+                raise RuntimeError("cannot hold gripper: feedback unavailable")
+            self._target_pos = float(state[0])
+            self._state = self._STATE_POSITION
+            self._position_reached = True
+            self._grasp_result = None
+
     def _wait_until(
         self,
         predicate,

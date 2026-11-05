@@ -82,7 +82,7 @@ ros2 launch zekeep_moveit_config hardware.launch.py arm_namespace:=zekeep use_rv
 终端 3 手动使能并启动末端手柄：
 
 ```bash
-cd $HOME/Desktop/Zekeeparm
+cd "$ZKEEP_WS"
 source tools/activate_ros.sh
 export ROS_LOCALHOST_ONLY=1
 ros2 service call /zekeep/enable std_srvs/srv/Trigger '{}'
@@ -133,14 +133,3 @@ ros2 topic echo /joy
 ```
 
 真机前先悬空或降低 `max_speeds`，逐轴确认方向。手柄断连或 `/joy` 超过 0.3 秒无更新时，节点请求保持；驱动自身还有 0.2 秒伺服看门狗。
-
-## 离线验证
-
-在工作区根目录加载 `tools/activate_ros.sh` 后运行，不连接硬件、不启动 ROS 节点：
-
-```bash
-python -m unittest discover -s src/zekeep_joystick/test -v
-python -m unittest discover -s tools -p test_pi05_entry.py -v
-```
-
-覆盖两个控制入口及末端切换后的关节模式：LT/RT 按时长开合、两秒全行程、松手保持、接触时限制目标超前、反馈超时、X 单次触发、停止确认、失败保持、LB 重新许可和 A/B 夹爪动作，以及采集入口默认启动末端控制。

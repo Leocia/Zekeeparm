@@ -57,20 +57,28 @@ python scripts/continuous_grasp.py --target-class cube
 红、蓝、绿方块使用对应放置点，其他类别使用原默认点；`cube` 不包含杯子、笔等类别。
 启动会连接 SDK 并运动到准备位，连续模式随后自动抓取；`Q` / `Esc` 在画面响应时退出，
 沿用原流程回关节零位、松爪并断使能。运动执行期间界面阻塞，键盘不能作为急停。
+回零失败、执行故障或退出被中断时，进程保留连接并尝试保持机械臂和夹爪，
+不自动失能。确认回零路径安全后输入 `HOME` 重试；可靠支撑机械臂及夹持物后，
+输入完整的 `DISABLE` 才失能退出。位姿/关节诊断脚本共用此退出流程。
+标准输入关闭后进程继续驻留；`Ctrl+C`、`SIGTERM` 和终端挂断不会替代支撑确认。
+反馈或控制循环失效时会报告保持未确认，不能保证力矩；强杀、断电或 USB 拔出同样不能保证保持。
 勿与 ROS 驱动或其他 SDK 进程同时运行。采集后目标必须保持静止。
 同类物体沿用同一固定放置点，不自动调整堆叠高度；多物体放置空间需现场确认。
 
 离线检查在上述 `rebotarm` 环境、本目录执行，不打开相机或连接机械臂：
 
 ```bash
-python -m unittest discover -s test -v
-python ../zekeep_bringup/test/test_color_placement.py -v
 python scripts/click_grasp.py --help
 python scripts/continuous_grasp.py --help
 ```
 
-本次验证通过 20 项离线测试、Python 语法检查和两个入口的 `--help` 检查；
-尚未进行实机抓取验证。
+根目录另提供不依赖 GraspNet 或模型的 SDK 导入及配置自检：
+
+```bash
+bash tools/env.sh vision python -B tools/check_sdk.py
+```
+
+开发回归测试已从交付包移除；SDK 自检不代表实机抓取验收。
 
 ## 色块颜色校准
 
@@ -104,8 +112,9 @@ J1 `±2.58 rad`、J2 `0–3.7 rad`、J3 `-0.01–3.7 rad`、J4–J6 `±1.57 rad`
 joint6 零位法兰已按当前安装绕自身轴增加 `+90°`；准备位 TCP 姿态已按新 URDF FK 重算，
 关节值和方向保持不变。
 
-现有设备手眼标定已完成，以当前参数为准。仅换电脑且相机、机械臂、安装和场景不变时，
-直接沿用当前内参与手眼文件，无需生成或刷新身份指纹。
+交付包保留原设备手眼和颜色标定，不附旧设备内参或身份快照。
+新机械臂、新相机先按[新设备初始化](../../README.md#新设备配置与标定)填写身份、保存当前内参并核验标定；
+安装位置、曝光或光照变化时，必要时重新标定。保留文件不代表新安装已经验证。
 CLI、鼠标/连续抓取和网页入口均不读取 `identity.local.json`，缺失、过期或损坏不会阻止启动。
 相机序列号仍须与 `camera.serial` 一致，标定文件、参考帧和运行相机参数仍需通过检查。
 
@@ -151,8 +160,8 @@ ROS 标准开爪目标为 `1.15 rad`，本包 `robot.gripper` 当前 `angle_open
 `blue_place`、`green_place`。其他类别仍使用原 `place.joint_target_rad` 固定点。
 按实际识别类别选择，不按用户请求文本或物品名称中的颜色单词猜测。
 
-三个放置点来自工作区 `ready_3poses_20261009_095828.json` 的第 1、2、3 个记录，
-原始记录保留；关节值存于 `place.named_joint_targets_rad`，并同步为 SRDF 的
+三个放置点沿用工作区 `ready_3poses_20261009_095828.json` 的第 1、2、3 个记录。
+交付包保留配置中的完整精度，不附原始采集文件；关节值存于 `place.named_joint_targets_rad`，并同步为 SRDF 的
 同名 `arm` 位姿。顺序为 joint1–joint6，单位 rad，不能再次取反或转成角度写入。
 分开执行夹取、放置时，网页后端保留夹取成功时的类别，后续放置无需重新识别。
 

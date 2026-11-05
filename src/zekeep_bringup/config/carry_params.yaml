@@ -10,10 +10,11 @@ carry_node:
       - 0.0
 
     # 运动规划与安全参数。
-    velocity_scaling: 0.40
-    acceleration_scaling: 0.15
-    planning_time: 5.0
-    cartesian_max_step: 0.01
+    velocity_scaling: 0.25
+    acceleration_scaling: 0.08
+    planning_time: 2.0
+    cartesian_max_step: 0.002
+    jump_threshold: 0.0
     hover_height: 0.05
     position_tolerance: 0.005
     orientation_tolerance: 0.02
@@ -43,6 +44,6 @@ carry_node:
     gripper:
       open_position: 0.035  # 单侧夹指张开位移，单位 m
       close_position: 0.0   # 夹指闭合位置，单位 m
-      hardware_open_position: 1.15   #当前真机电机张开目标，单位 rad
+      hardware_open_position: 1.30   #当前真机电机张开目标，单位 rad
       closing_torque: 1.0
       hold_torque: 0.30

@@ -19,10 +19,12 @@ J4–J6 `[-1.57, 1.57] rad`。ROS/视觉电机到模型的六轴方向均为 `-1
 独立 LeRobot 遥操作保留原有角度制标定，不套用这组方向。
 当前 joint6 零位法兰相对旧坐标系绕 joint6 自身轴增加 `+90°`，两份 URDF 已同步。
 因此准备位 TCP 姿态的 roll 已重新计算；准备位关节值和限位不变。
-当前手眼标定已完成；仅换电脑且设备、安装、场景未变时可沿用，见[视觉说明](../zekeep_grasp/README.md)。
+交付包保留原设备手眼和颜色标定，但不附旧设备内参。新设备须保存当前内参并核验标定，
+必要时重新标定，见[新设备初始化](../../README.md#新设备配置与标定)。
 
 标准配置 `config/zekeep_hardware.yaml` 使用 `posvel` 控制，
-`motion_authorized=true`、`supervised_trial_authorized=true`，启动默认不使能。
+`motion_authorized=false`、`supervised_trial_authorized=false`，启动默认不使能。
+新设备完成零位、方向、TCP、限位及现场几何核验后，再明确开启所需授权。
 `dynamics_verified=false`，普通轨迹重力前馈关闭。手眼标定完成不等于动力学已验证。
 配置在启动时读取；修改源码配置后需重新构建并重启驱动。
 

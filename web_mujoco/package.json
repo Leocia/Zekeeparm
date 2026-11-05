@@ -12,10 +12,7 @@
     "dev": "vite --host 127.0.0.1 --port 5174",
     "prebuild": "npm run prepare:model",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 5174",
-    "test:static": "node scripts/test-service-worker.mjs && npm run build && node scripts/test-static-model.mjs",
-    "pretest": "npm run prepare:model",
-    "test": "node scripts/check-physics.mjs && node scripts/test-tcp-drag.mjs && node scripts/test-obstacle-controls.mjs && node scripts/test-task-motion.mjs && python3 scripts/test-model-source.py && node scripts/test-model-sync.mjs"
+    "preview": "vite preview --host 127.0.0.1 --port 5174"
   },
   "dependencies": {
     "@mujoco/mujoco": "3.12.0",

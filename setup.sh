@@ -48,10 +48,10 @@ sudo locale-gen en_US en_US.UTF-8
 sudo add-apt-repository universe -y
 
 if [[ ! -f /opt/ros/humble/setup.bash ]]; then
-  ros_apt_version="$(curl -fsSL https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
-  [[ -n "$ros_apt_version" ]] || die "无法取得 ros-apt-source 版本"
+  # Pin the bootstrap package so fresh installs do not depend on GitHub API limits.
+  ros_apt_version=1.3.0
   ros_apt_deb="$setup_temp_dir/ros2-apt-source.deb"
-  curl -fL -o "$ros_apt_deb" "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ros_apt_version}/ros2-apt-source_${ros_apt_version}.jammy_all.deb"
+  curl -fL --retry 3 -o "$ros_apt_deb" "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ros_apt_version}/ros2-apt-source_${ros_apt_version}.jammy_all.deb"
   sudo dpkg -i "$ros_apt_deb"
 fi
 
@@ -147,6 +147,9 @@ if [[ "$graspnet_accepted" == YES ]]; then
     git clone --depth 1 https://github.com/graspnet/graspnetAPI.git \
       "$workspace_dir/third_party/graspnet-baseline/graspnetAPI"
   fi
+  # grasp_nms needs Cython before metadata generation without build isolation.
+  "$conda_exe" run -p "$vision_env_dir" python -m pip install \
+    -c "$workspace_dir/tools/constraints-vision.txt" Cython==3.0.12
   "$conda_exe" run -p "$vision_env_dir" python -m pip install \
     -c "$workspace_dir/tools/constraints-vision.txt" --no-build-isolation \
     "$workspace_dir/third_party/graspnet-baseline/graspnetAPI"

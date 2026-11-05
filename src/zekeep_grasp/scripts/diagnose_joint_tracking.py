@@ -195,12 +195,7 @@ def main(argv=None):
         print(f"[ERROR] {type(error).__name__}: {error}", file=sys.stderr, flush=True)
         return 1
     finally:
-        try:
-            if robot.control_loop_active:
-                robot.hold_current()
-                input("已保持当前位置。托住机械臂后，按 Enter 失能并退出：")
-        finally:
-            robot.close()
+        robot.close()
 
 
 if __name__ == "__main__":

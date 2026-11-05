@@ -1,4 +1,4 @@
-# Six-axis 网页仿真器
+# Six-axis 网页控制台
 
 网页加载当前 bringup 包的 URDF 和网格，不依赖作者用户名或固定工作区目录。
 
@@ -27,10 +27,11 @@ node "$ZKEEP_WS/src/zekeep_bringup/web/server.js"
 
 ## 网页相机抓取统一启动
 
-本机只需一个终端、一条命令；无需手动 source、export 或另开驱动终端：
+完成安装、设置实际 `ZKEEP_WS` 后，一个终端运行以下命令即可，无需另开驱动终端。
+已有 Conda 时每个新终端还需设置 `ZKEEP_MINIFORGE_DIR="$(conda info --base)"`。
 
 ```bash
-$HOME/Desktop/Zekeeparm/tools/start_web_grasp.sh
+"$ZKEEP_WS/tools/start_web_grasp.sh"
 ```
 
 脚本按自身路径找到工作区，自动隔离 ROS/SDK 与原视觉 Python 环境，启动网页、
@@ -42,7 +43,7 @@ SDK 环境沿用 `tools/activate_ros.sh`（默认 `.venv-ros`）。
 AI 面板默认只能生成计划。要允许人工确认后执行 AI 计划，使用同一入口：
 
 ```bash
-$HOME/Desktop/Zekeeparm/tools/start_web_grasp.sh --ai-motion
+"$ZKEEP_WS/tools/start_web_grasp.sh" --ai-motion
 ```
 
 已有进程时，先结束任务、放下物体并按 Ctrl+C 等待安全退出，再用上述命令启动。
@@ -94,7 +95,7 @@ YOLO 类别配置和画面。默认类别已加入 `purple block`，可输入“
 
 GraspNet 的 `grasps=0/27/214` 表示宽度筛选后剩 0 个、目标筛选后 27 个、
 碰撞筛选后 214 个。`width=[0.072,0.082]m` 是候选夹爪开口范围；当前
-`robot.gripper_max_width_m=0.070`，超限候选全部拒绝，状态同时显示宽度限值。
+`robot.gripper_max_width_m=0.06517241379310346`（约 65.17 mm），超限候选全部拒绝，状态同时显示宽度限值。
 不要为绕过拒绝而扩大实机夹爪限值。
 
 YOLO/GraspNet 抓取在任务开始时选取一次新鲜、已标定且机械臂静止的 RGB-D
@@ -136,12 +137,12 @@ MoveIt 退出也不会关闭网页。加载视觉权重需要等待；后端画�
 关闭旧网页、MoveIt 和视觉。新入口会检查重复启动和旧端口/节点占用，避免两个
 进程同时控制机械臂或占用相机；不会自动结束其他进程。
 
-更新后只需构建一次（本机本次修改已构建）：
+更新源码后在 ROS/SDK 环境中重新构建：
 
 ```bash
-cd $HOME/Desktop/Zekeeparm
-source /opt/ros/humble/setup.bash
-/usr/bin/python3 -m colcon build --base-paths src \
+cd "$ZKEEP_WS"
+source tools/activate_ros.sh
+python -m colcon build --base-paths src \
   --packages-select zekeep_bringup zekeep_shadow zekeep_teach zekeep_moveit_config
 ```
 

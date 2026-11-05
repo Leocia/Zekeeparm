@@ -10,6 +10,7 @@ through ``OfficialSdkRobot`` and must not run beside a ROS driver or Gateway.
 from __future__ import annotations
 
 import argparse
+import signal
 import os
 import re
 import sys
@@ -1044,6 +1045,8 @@ def main(*, click_to_grasp: bool = False, continuous: bool = False) -> int:
     yolo = None
     faulted = False
     normal_shutdown = False
+    previous_signals = {sig: signal.signal(sig, signal.default_int_handler)
+                        for sig in (signal.SIGTERM, signal.SIGHUP)}
     try:
         hand_eye_reference_frame = str(
             (cfg.get("robot") or {}).get("end_effector_frame", "")
@@ -1376,29 +1379,20 @@ def main(*, click_to_grasp: bool = False, continuous: bool = False) -> int:
         return 0
     finally:
         try:
-            camera.close()
-        except Exception:
-            pass
-        cv2.destroyAllWindows()
-        if normal_shutdown and not faulted:
+            for cleanup in (camera.close, cv2.destroyAllWindows):
+                try:
+                    cleanup()
+                except Exception:
+                    pass
+        except BaseException:
+            normal_shutdown = False
+            raise
+        finally:
             try:
-                if robot.control_loop_active:
-                    zero_duration = float(
-                        (cfg.get("official_sdk") or {}).get(
-                            "zero_pose_duration_s", 8.0
-                        )
-                    )
-                    print("[Exit] session finished; return to joint zero pose")
-                    robot.move_joints_and_wait(
-                        np.zeros(6, dtype=np.float64), zero_duration
-                    )
-                    print("[Exit] joint zero pose reached; hold 1.0s")
-                    time.sleep(1.0)
-                    robot.release()
-                    print("[Exit] motors disabled")
-            except Exception as exc:
-                print(f"[Exit] normal shutdown motion failed: {exc}")
-        robot.close()
+                robot.close(return_to_zero=normal_shutdown and not faulted)
+            finally:
+                for sig, handler in previous_signals.items():
+                    signal.signal(sig, handler)
 
 
 if __name__ == "__main__":

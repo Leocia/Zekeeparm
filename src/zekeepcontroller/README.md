@@ -50,5 +50,7 @@ ros2 service call /zekeep/enable std_srvs/srv/Trigger '{}'
 `disable_after_safe_home=false` 不允许已使能手臂直接断开。
 显式 `disable` 会释放力矩，调用前需支撑机械臂。
 
-标准配置已授权普通运动与人工监督重力补偿；`dynamics_verified=false`，
-普通轨迹重力前馈关闭。授权标记不代表现场验证结果。
+交付配置的 `control.motion_authorized=false`、
+`gravity_compensation.supervised_trial_authorized=false`，默认禁止普通运动与监督重力试验。
+新设备完成现场核验后再明确开启所需授权，见[新设备初始化](../../README.md#新设备配置与标定)。
+`dynamics_verified=false`，普通轨迹重力前馈关闭。授权标记不代表现场验证结果。

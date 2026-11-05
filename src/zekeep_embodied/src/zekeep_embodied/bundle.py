@@ -147,7 +147,8 @@ def doctor(config_path):
     paths = [Path(config_path), Path(config["teleop_config"])]
     for camera in config["cameras"].values():
         if camera["type"] == "orbbec":
-            paths += [Path(camera["python"]).expanduser(), (base / camera["config"]).resolve()]
+            paths += [Path(os.environ.get("ZKEEP_VISION_PYTHON") or camera["python"]).expanduser(),
+                      (base / camera["config"]).resolve()]
     if config.get("ros_joystick"):
         paths.append(Path(config["ros_joystick"]["hardware_config"]))
     missing += [str(path) for path in paths if not path.is_file()]

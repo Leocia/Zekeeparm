@@ -1,17 +1,24 @@
 # 选装模块
 
-基础安装不安装模型训练、Studio 或 MuJoCo。以下操作从项目根目录运行，需要网络。
+基础安装不安装数采、模型训练或 MuJoCo。以下操作从项目根目录运行，需要网络。
 所有安装入口只安装依赖，不连接设备或使能电机；本包不附模型、训练结果或数据。
 
 ## 共用数采
 
 ```bash
 bash tools/install_optional.sh collect
-./tools/collect.sh doctor
 ```
 
 `embodied` 环境使用独立的采集依赖；相机进程仍使用 `rebotarm`，ROS 策略端保留 ROS 环境。
-先填写 `src/zekeep_embodied/configs/record.yaml` 的设备路径、安装标识、工作区域；新设备默认未确认。
+安装后先填写 `src/zekeep_embodied/configs/record.yaml` 的任务、设备路径、非空 `installation_id` 和工作区域；
+新设备默认未确认，现场核验后再将 `workspace.confirmed` 设为 `true`。
+相机解释器优先使用 `ZKEEP_VISION_PYTHON`，未设置或为空时使用 YAML 中的 `cameras.wrist.python`。
+完成配置后再运行无硬件检查：
+
+```bash
+./tools/collect.sh doctor
+```
+
 `camera-check` 会打开相机；本次交付验证不执行该命令。
 
 ## ACT 与 π0.5 模型
@@ -49,7 +56,7 @@ ACT 的 ResNet 预训练骨干在首次使用时联网获取；用户训练模�
 
 ```bash
 bash tools/install_optional.sh sim
-bash tools/env.sh ros ros2 launch zekeep_bringup web_sim.launch.py python_executable:="$PWD/.venv-ros/bin/python"
+bash tools/env.sh ros ros2 launch zekeep_bringup web_sim.launch.py python_executable:="${ZKEEP_ROS_VENV:-$PWD/.venv-ros}/bin/python"
 ```
 
 只启动独立仿真，默认不发布 ROS；启用发布时只使用 `/zekeep_sim/*`。
@@ -68,18 +75,3 @@ npm run dev
 
 访问 `http://127.0.0.1:5174`。模型来自 `web_mujoco/robot`，导出资源在安装/构建时生成。
 不连接机械臂，不需要 ROS。见 [网页仿真说明](../web_mujoco/README.md)。
-
-## Studio（独立提供）
-
-Studio 源码不随 GitHub 仓库发布。另行取得后，先将目录放到 `apps/studio/`，再执行以下安装步骤。
-
-当前 Blockly 依赖要求较新的 Node.js 与 npm：可用 Node.js 22.22.2+（22.x）、24.15+（24.x）或 26+。
-安装器用 `npm ci --engine-strict` 核对锁定依赖的实际要求；先在当前终端准备这两个工具。
-
-```bash
-bash tools/install_optional.sh studio
-bash tools/env.sh studio python apps/studio/studio.py
-```
-
-默认启动行为与模拟/真机选择见另行提供的 `apps/studio/README.md`。
-浏览器依赖通过 npm 安装；原 SDK 和硬件接口保留。Windows 打包仍属未验证范围。

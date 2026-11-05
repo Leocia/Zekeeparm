@@ -7,6 +7,7 @@ separate and owns no motor port.
 from __future__ import annotations
 
 from pathlib import Path
+import signal
 import threading
 import time
 from types import MethodType
@@ -425,6 +426,7 @@ class OfficialSdkRobot:
         duration_s: float,
         cancel_event=None,
     ) -> None:
+        self._check_motion_cancelled(cancel_event)
         if not self.move_to_traj(pose6d, duration_s):
             raise RuntimeError("official Cartesian trajectory planning failed")
         thread = self._controller._send_thread
@@ -433,14 +435,12 @@ class OfficialSdkRobot:
         deadline = time.monotonic() + float(self._controller._traj_duration) + 5.0
         while thread.is_alive() and time.monotonic() < deadline:
             thread.join(timeout=0.05)
-            if cancel_event is not None and cancel_event.is_set():
-                self.hold_current()
-                raise RuntimeError("motion cancelled: control client disconnected")
+            self._check_motion_cancelled(cancel_event)
         if thread.is_alive() or self._controller._moving:
             raise RuntimeError("official Cartesian trajectory interrupted")
         if not self._arm.control_loop_active:
             raise RuntimeError("official SDK control loop stopped")
-        self._wait_for_target_reached(expected_joints)
+        self._wait_for_target_reached(expected_joints, cancel_event=cancel_event)
 
     def move_joints_and_wait(
         self,
@@ -461,14 +461,12 @@ class OfficialSdkRobot:
         points = start + blends[:, None] * (target - start)
         duration_s = self._controller._posvel_duration(points, start, float(duration_s))
         for point in points:
-            if cancel_event is not None and cancel_event.is_set():
-                self.hold_current()
-                raise RuntimeError("motion cancelled: control client disconnected")
+            self._check_motion_cancelled(cancel_event)
             self._controller._q_target[:] = point
             time.sleep(float(duration_s) / steps)
             if not self._arm.control_loop_active:
                 raise RuntimeError("official SDK control loop stopped")
-        self._wait_for_target_reached(target)
+        self._wait_for_target_reached(target, cancel_event=cancel_event)
 
     def kinematics_pose(self, joints: np.ndarray) -> np.ndarray:
         from utils.transforms import mat4_to_pose6d
@@ -484,22 +482,32 @@ class OfficialSdkRobot:
         )
 
     def hold_current(self) -> None:
-        """Cancel trajectory updates and hold the measured arm position."""
+        """Cancel targets and attempt to hold both arm and gripper."""
         if self._controller is None or self.grasp_driver is None:
             return
-        self._controller._stop_send.set()
-        thread = self._controller._send_thread
-        if thread is not None and thread.is_alive() and thread is not threading.current_thread():
-            thread.join(timeout=1.0)
-        self._controller._moving = False
-        joints = np.asarray(
-            self._arm.get_state(request_feedback=True)[0][:6],
-            dtype=np.float64,
-        )
-        if joints.shape != (6,) or not np.all(np.isfinite(joints)):
-            raise RuntimeError("cannot hold current pose: invalid joint feedback")
-        self._controller._q_target[:] = joints
-        self._controller._qd_target[:] = 0.0
+        try:
+            self.grasp_driver.hold_current()
+        finally:
+            self._controller._stop_send.set()
+            thread = self._controller._send_thread
+            if thread is not None and thread.is_alive() and thread is not threading.current_thread():
+                thread.join(timeout=1.0)
+                if thread.is_alive():
+                    raise RuntimeError("trajectory sender did not stop; hold unconfirmed")
+            self._controller._moving = False
+            joints = np.asarray(
+                self._arm.get_state(request_feedback=True)[0][:6],
+                dtype=np.float64,
+            )
+            if joints.shape != (6,) or not np.all(np.isfinite(joints)):
+                raise RuntimeError("cannot hold current pose: invalid joint feedback")
+            self._controller._q_target[:] = joints
+            self._controller._qd_target[:] = 0.0
+
+    def _check_motion_cancelled(self, cancel_event) -> None:
+        if cancel_event is not None and cancel_event.is_set():
+            self.hold_current()
+            raise RuntimeError("motion cancelled: control client disconnected")
 
     def _assert_target_reached(self, expected_joints: np.ndarray) -> None:
         actual = self.current_joints()
@@ -515,7 +523,7 @@ class OfficialSdkRobot:
                 f"error={error:.4f}rad limit={tolerance:.4f}rad"
             )
 
-    def _wait_for_target_reached(self, expected_joints: np.ndarray) -> None:
+    def _wait_for_target_reached(self, expected_joints: np.ndarray, *, cancel_event=None) -> None:
         safety = self.cfg.get("safety") or {}
         expected = np.asarray(expected_joints, dtype=np.float64).reshape(6)
         position_tolerance = float(safety.get("motion_position_tolerance_rad", 0.005))
@@ -527,7 +535,9 @@ class OfficialSdkRobot:
         actual = np.zeros(6, dtype=np.float64)
         velocity = np.zeros(6, dtype=np.float64)
         while time.monotonic() < deadline:
+            self._check_motion_cancelled(cancel_event)
             actual, velocity, _ = self._arm.get_state(request_feedback=True)
+            self._check_motion_cancelled(cancel_event)
             actual = np.asarray(actual[:6], dtype=np.float64)
             velocity = np.asarray(velocity[:6], dtype=np.float64)
             if not np.all(np.isfinite(actual)) or not np.all(np.isfinite(velocity)):
@@ -585,14 +595,76 @@ class OfficialSdkRobot:
         else:
             self.grasp_driver.release_gripper(cancel_event=cancel_event)
 
-    def close(self) -> None:
-        # RebotArmEndPose.end() calls safe_home(), which violates route fault
-        # policy and can create an unplanned motion during shutdown.
-        if self._arm is not None:
+    def close(self, *, return_to_zero: bool = False) -> None:
+        """Retain connected motors until homing succeeds or support is confirmed."""
+        if self._arm is None:
+            return
+
+        def notice(message):
+            try:
+                print(message, flush=True)
+            except (OSError, ValueError):
+                pass  # A closed terminal must not terminate the holding process.
+
+        cancelled = threading.Event()
+
+        def interrupt(_sig, _frame):
+            cancelled.set()
+
+        handlers = {}
+        if self._arm._connected and threading.current_thread() is threading.main_thread():
+            for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+                handlers[sig] = signal.signal(sig, interrupt)
+        try:
+            input_available = True
+            while self._arm._connected:
+                try:
+                    if return_to_zero:
+                        try:
+                            duration = float((self.cfg.get("official_sdk") or {}).get("zero_pose_duration_s", 8.0))
+                            notice("[Exit] returning to joint zero pose")
+                            self.hold_current()
+                            self.move_joints_and_wait(np.zeros(6), duration, cancel_event=cancelled)
+                            if cancelled.wait(1.0):
+                                raise RuntimeError("shutdown interrupted")
+                            self.release(cancel_event=cancelled)
+                            self._check_motion_cancelled(cancelled)
+                            break
+                        except (Exception, KeyboardInterrupt) as exc:
+                            notice(f"[Exit] shutdown motion failed; connection retained: {exc}")
+                            return_to_zero = False
+                    if not input_available:
+                        time.sleep(1.0)
+                        continue
+                    try:
+                        self.hold_current()
+                    except Exception as exc:
+                        notice(f"[Exit] hold unconfirmed; connection retained: {exc}")
+                    if not self.control_loop_active:
+                        notice("[Exit] control loop unavailable; holding torque is not guaranteed")
+                    try:
+                        command = input(
+                            "[Exit] 可靠支撑机械臂及夹持物后输入 DISABLE 失能退出；"
+                            "确认路径安全后输入 HOME 重试回零："
+                        ).strip()
+                    except (EOFError, OSError, ValueError):
+                        input_available = False
+                        notice("[Exit] stdin unavailable; process retained. Support the arm before external recovery.")
+                        continue
+                    if command == "DISABLE":
+                        break
+                    return_to_zero = command == "HOME"
+                    if return_to_zero:
+                        cancelled.clear()
+                except KeyboardInterrupt:
+                    return_to_zero = False
             self._arm.disconnect()
-        self._controller = None
-        self._arm = None
-        self.grasp_driver = None
+            self._controller = None
+            self._arm = None
+            self.grasp_driver = None
+        finally:
+            for sig, handler in handlers.items():
+                signal.signal(sig, handler)
 
     def _serial_from_sdk_config(self) -> str | None:
         config_path = self.repo_root / "config" / "rebotarm_dm.yaml"

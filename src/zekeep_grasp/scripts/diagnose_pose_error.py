@@ -91,13 +91,7 @@ def main():
         print(f"[ERROR] {error}", file=sys.stderr, flush=True)
         return 1
     finally:
-        try:
-            if robot.control_loop_active:
-                # Stop a partially sent trajectory before waiting for shutdown.
-                robot.hold_current()
-                input("Support the arm if needed; press Enter to disable motors and exit: ")
-        finally:
-            robot.close()
+        robot.close()
 
 
 if __name__ == "__main__":

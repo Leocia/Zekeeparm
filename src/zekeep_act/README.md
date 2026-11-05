@@ -70,18 +70,27 @@ Orbbec Viewer 预设只作用于腕部相机。
 
 ## 步骤与命令
 
-在工作区根目录执行。使用 ACT、π0.5 共用的 `act` 环境；其他解释器优先用 `LEROBOT_PYTHON`，兼容 `ACT_PYTHON`。本机已安装，日常直接运行 `doctor`。以下克隆命令仅供首次创建环境，已有 `act` 时不要重复：
+先完成[基础安装](../../docs/INSTALL_PORTABLE.md)，再在工作区根目录安装数采与共用模型依赖。
+使用 ACT、π0.5 共用的 `act` 环境；其他解释器优先用 `LEROBOT_PYTHON`，兼容 `ACT_PYTHON`。
 
 ```bash
 bash tools/install_optional.sh collect
 bash tools/install_optional.sh models
 source tools/activate_ros.sh
 colcon build --symlink-install --packages-select zekeepcontroller zekeep_joystick
+```
+
+1. 先填写 `src/zekeep_embodied/configs/record.yaml` 的任务、非空 `installation_id`、相机设备和解释器路径，
+   确认采集区域、物体和固定容器位置；现场核验后再将 `workspace.confirmed` 设为 `true`。
+   相机移动后更新 `installation_id` 并重新采集。关闭其他机械臂控制程序，再运行检查：
+
+```bash
+./tools/collect.sh doctor
 ./tools/act.sh doctor
+# 以下命令会打开相机，不连接机械臂。
 ./tools/collect.sh camera-check
 ```
 
-1. 确认并填写采集区域、物体和固定容器位置。相机移动后更新 `installation_id` 并重新采集。关闭其他机械臂控制程序。
 2. 分别开终端启动唯一的驱动、MoveIt、手柄控制。默认是已有的末端笛卡尔控制，需要 MoveIt：
 
 ```bash

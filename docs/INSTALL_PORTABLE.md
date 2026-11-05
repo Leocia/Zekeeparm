@@ -12,7 +12,7 @@
 | Conda `lerobot` | 3.12 | 独立主从遥操作 |
 | Conda `embodied`（选装） | 3.10 | 共用数采、导出、ROS 策略执行端 |
 | Conda `act`（选装） | 3.10 | ACT 与 π0.5 模型 |
-| Conda `zekeep-studio`（选装） | 3.10 | Studio |
+| `web_mujoco/.venv`（选装） | 系统 Python | 独立网页仿真的模型导出 |
 
 不要复制旧电脑的环境、build/install/log、CUDA `.so` 或 node_modules。可复制项目到任意路径再重建。
 已有 Conda 时每个新终端先设置 `ZKEEP_MINIFORGE_DIR="$(conda info --base)"`。
@@ -47,7 +47,10 @@ bash tools/env.sh base bash setup.sh
 ```
 
 安装器准备 ROS、串口权限、SDK、八个 ROS 包、视觉及遥操作依赖。
+ROS apt 源引导包固定为 [ros-apt-source 1.3.0](https://github.com/ros-infrastructure/ros-apt-source/releases/tag/1.3.0)，
+直接下载 Jammy 安装包，不依赖 GitHub API 查询最新版本。
 GraspNet 安装需自行阅读并接受上游许可；输入 YES 安装该可选依赖，不会自动接受许可。
+接受许可后，安装器先安装 `Cython==3.0.12`，再构建 GraspNet API 的依赖。
 基础权重随后执行 `bash tools/download_models.sh base` 按需获取。
 GraspNet 权重另执行 `ACCEPT_GRASPNET_LICENSE=YES bash tools/download_models.sh graspnet`。
 SDK 配置保留 DM 型号和交付接口，未导入源包的旧全局配置文件。
@@ -64,4 +67,4 @@ ROS venv 与视觉 Conda 使用不同 NumPy ABI，不要混装依赖。
 运动前核验 `zekeep_hardware.yaml` 的零位、方向、控制增益和现场几何，再显式打开所需授权。
 保持启动不自动使能，不绕过序列号、内参、反馈新鲜度或设备占用检查。
 
-选装 ACT、π0.5、仿真和 Studio 见 [OPTIONAL_MODULES.md](OPTIONAL_MODULES.md)。
+选装数采、ACT、π0.5 和仿真见 [OPTIONAL_MODULES.md](OPTIONAL_MODULES.md)。

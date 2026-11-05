@@ -32,7 +32,7 @@ ros2 launch zekeep_moveit_config hardware.launch.py arm_namespace:=zekeep
 - `config/zekeep.srdf`：`arm` 链从 `base_link` 到 `link6`；`gripper` 包含 `gripper_joint`。
 - 命名姿态：`planning_initial`、`ready_pose`、`open`、`closed`。
 - `ready_pose` 与视觉配置的 `official_sdk.ready_joints` 对齐，以关节值为准。
-- J1 `[-2.58, 2.58] rad`，J2/J3 `[0, 3.7] rad`，J4–J6 `[-1.57, 1.57] rad`。
+- J1 `[-2.58, 2.58] rad`，J2 `[0, 3.7] rad`，J3 `[-0.01, 3.7] rad`，J4–J6 `[-1.57, 1.57] rad`。
 - `gripper_joint` 是平移关节，`open=0.035 m`、`closed=0 m`，不是电机弧度。
 - `kinematics.yaml`、`ompl_planning.yaml`、`joint_limits.yaml` 管理 IK、规划和限位。
 - `moveit_controllers.yaml` 管理执行接口，命名空间须与驱动、客户端一致。

@@ -17,7 +17,7 @@
 先按根目录 docs/OPTIONAL_MODULES.md 安装依赖，再运行：
 
 ```bash
-cd $HOME/Desktop/Zekeeparm/web_mujoco
+cd "$ZKEEP_WS/web_mujoco"
 npm run dev
 ```
 
@@ -25,14 +25,12 @@ npm run dev
 
 新电脑先执行 `npm ci`，并安装 Python 依赖 `python3 -m pip install -r requirements.txt`。
 也可先建立 Python 虚拟环境，激活后再执行上述安装及 npm 命令。
-`dev`、`build` 和 `test` 会先重新导出当前 URDF，避免继续显示旧模型。
+`dev` 和 `build` 会先重新导出当前 URDF，避免继续显示旧模型。
 运行时只读取本项目内的模型资源，不再跟随原 ROS 工作区的修改。
 
 ```bash
-npm test       # TCP 拖拽、物理抓放/避障、规划诊断与距离测量、独立副本构建及同步
 npm run build # 生成独立静态网站 dist/
 npm run preview
-npm run test:static # 真实 Chrome 验证浏览器 URDF 转换和静态站编辑（需 google-chrome 或 CHROME_BIN）
 ```
 
 构建结果使用相对资源路径，可以放在静态网站的子目录。
@@ -161,7 +159,7 @@ URDF 编辑新站：**https://leocia.github.io/zekeeparm-urdf-lab/**
 
 发布仓库只保存 `dist/` 构建产物、仿真模型及来源说明，不上传 ROS 工作区或本地配置。
 GitHub Pages 发布源为 `main` 分支根目录，保留 `.nojekyll`。
-更新前运行 `npm test` 和 `npm run build`，再将 `dist/` 内容同步到发布仓库并提交、推送。
+更新前运行 `npm run build` 并在浏览器核验，再将 `dist/` 内容同步到发布仓库并提交、推送。
 静态资源、模型和 Service Worker 均使用页面子目录；不需要服务器后端。
 回滚时在发布仓库还原至已验证的历史版本，再推送触发 Pages 发布。
 

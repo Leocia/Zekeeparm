@@ -5,9 +5,10 @@
 ## 独立启动
 
 ```bash
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 launch zekeep_bringup web_sim.launch.py
+cd "$ZKEEP_WS"
+bash tools/install_optional.sh sim
+bash tools/env.sh ros ros2 launch zekeep_bringup web_sim.launch.py \
+  python_executable:="${ZKEEP_ROS_VENV:-$PWD/.venv-ros}/bin/python"
 ```
 
 主控制网页已移除 MuJoCo 入口和仿真轮询。本后端仍可独立启动，通过 `http://127.0.0.1:8083/state` 查询；不自动占用网页模型。
@@ -27,7 +28,9 @@ ros2 launch zekeep_bringup web_sim.launch.py
 无桌面浏览器也可使用：
 
 ```bash
-MUJOCO_GL=egl PYTHONPATH=src/zekeep_sim python3 -m zekeep_sim.server --bringup src/zekeep_bringup
+cd "$ZKEEP_WS"
+MUJOCO_GL=egl PYTHONPATH=src/zekeep_sim \
+  "${ZKEEP_ROS_VENV:-$PWD/.venv-ros}/bin/python" -m zekeep_sim.server --bringup src/zekeep_bringup
 ```
 
 MuJoCo 和 NumPy 是运行依赖，离屏相机需要可用 EGL。图像失败时显示具体错误，不伪造检测。模型和渲染依据 [MuJoCo XML 文档](https://mujoco.readthedocs.io/en/stable/XMLreference.html)与 [Python 文档](https://mujoco.readthedocs.io/en/stable/python.html)。
