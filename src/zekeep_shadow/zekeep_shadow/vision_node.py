@@ -49,6 +49,7 @@ class ShadowVision(Node):
         self.camera.open()
         expected_serial = str(self.cfg.get("camera", {}).get("serial", ""))
         try:
+            self.camera.warm_up(20)
             if expected_serial and self.camera.serial != expected_serial:
                 raise RuntimeError(f"camera serial mismatch: expected {expected_serial}, got {self.camera.serial}")
             validate_calibration_identity(self.root, self.cfg, self.camera.serial)
@@ -96,6 +97,9 @@ class ShadowVision(Node):
         self.get_logger().info("Click red block; hold g to follow, release g to hold; h return after loss, c clear, q quit.")
 
     def run(self):
+        from utils.native_runtime import configure_opencv_qt
+
+        configure_opencv_qt()
         cv2.namedWindow("zekeep_shadow")
         cv2.setMouseCallback("zekeep_shadow", self.on_click)
         listener = None

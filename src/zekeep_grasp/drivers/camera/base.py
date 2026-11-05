@@ -82,9 +82,21 @@ class CameraDriver(ABC):
     # Helpers
 
     def warm_up(self, n_frames: int = 20) -> None:
-        """Drop early frames while exposure settles."""
+        """Drop early frames; reject startup if no complete RGB-D pair arrives."""
+        if n_frames < 0:
+            raise ValueError("n_frames must be non-negative")
+        valid_frames = 0
         for _ in range(n_frames):
-            self.get_frame()
+            color, depth = self.get_frame()
+            if color is not None and depth is not None:
+                valid_frames += 1
+        if n_frames and not valid_frames:
+            reason = self.last_frame_failure_reason or "missing color or depth frame"
+            raise CameraFrameError(
+                f"Camera warm-up received no complete RGB-D frames in {n_frames} attempts: {reason}\n"
+                "  Check USB connection/bandwidth, udev permissions, other camera clients, "
+                "and the selected stream profile before opening a preview."
+            )
 
     def setup_aruco(
         self,

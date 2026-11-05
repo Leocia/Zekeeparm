@@ -28,6 +28,7 @@ if PROJECT_ROOT_STR not in sys.path:
 
 from drivers.camera import CameraFrameError, make_camera  # noqa: E402
 from utils.camera_utils import configure_camera, load_config  # noqa: E402
+from utils.native_runtime import configure_opencv_qt
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,6 +83,7 @@ def main() -> None:
         print(cam.K)
         print("Press D to toggle depth. Press Q or Esc to quit.")
 
+        configure_opencv_qt()
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
         while True:
             color_bgr, depth_mm = cam.get_frame()

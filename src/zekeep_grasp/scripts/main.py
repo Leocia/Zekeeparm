@@ -28,7 +28,7 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(SDK_ROOT) not in sys.path:
     sys.path.insert(1, str(SDK_ROOT))
 
-from utils.native_runtime import preload_environment_libstdcpp  # noqa: E402
+from utils.native_runtime import configure_opencv_qt, preload_environment_libstdcpp  # noqa: E402
 
 preload_environment_libstdcpp()
 
@@ -1071,6 +1071,7 @@ def main(*, click_to_grasp: bool = False, continuous: bool = False) -> int:
         # the ready pose.
         from utils.calibration_identity import validate_calibration_identity
         camera.open()
+        camera.warm_up(20)
         validate_calibration_identity(PROJECT_ROOT, cfg, camera.serial)
         robot.connect()
         safety_cfg = cfg.get("safety") or {}
@@ -1086,11 +1087,11 @@ def main(*, click_to_grasp: bool = False, continuous: bool = False) -> int:
             )
             print("[Safety] MoveIt worktable geometry mirrored by local URDF swept-path check")
         robot.move_ready()
-        camera.warm_up(20)
         window = (
             "Click Target Grasp" if click_to_grasp else
             "Continuous Direct SDK Grasp" if continuous else "Simple Direct SDK Grasp"
         )
+        configure_opencv_qt()
         cv2.namedWindow(window, cv2.WINDOW_NORMAL)
         frozen = False
         last_display = None

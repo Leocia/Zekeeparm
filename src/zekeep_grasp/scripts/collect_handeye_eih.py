@@ -48,6 +48,7 @@ from drivers.robot.ros_calibration_robot import (
 from calibration.auto_poses import load_auto_calibration_poses
 from calibration.hand_eye import CalibMode, HandEyeCalibrator
 from utils.camera_utils import load_config
+from utils.native_runtime import configure_opencv_qt
 from utils.robot_model_config import resolve_robot_model_config
 from utils.transforms import rotation_matrix_to_euler_zyx
 
@@ -515,6 +516,7 @@ def main():
     WIN = "Eye-in-Hand Calibration  (operate in terminal)"
     finish_reason = "normal finish"
     try:
+        configure_opencv_qt()
         cv2.namedWindow(WIN, cv2.WINDOW_AUTOSIZE)
 
         while True:

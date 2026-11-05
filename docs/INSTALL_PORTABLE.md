@@ -64,11 +64,23 @@ SDK 配置保留 DM 型号和交付接口，未导入源包的旧全局配置文
 脚本只做无硬件导入检查。安装成功不代表新设备零位、手眼、桌面或运动已验收。
 ROS SDK 和视觉 SDK 均固定 NumPy 1.26.4，但仍分别安装各自依赖；数采、模型和遥操作环境不安装本 SDK，不要混装。
 
-## 已知安装问题（待处理）
+## Qt 插件冲突与相机取帧超时
 
-- **Qt 插件冲突**：2026-11-05 收到使用者在另一台电脑安装交付包后的反馈。状态为待复现、待修复；尚未提供完整报错，触发入口、具体插件与冲突原因均未确认。
-- 后续排查需记录触发命令、所用 Python/Conda 环境、完整 Qt 错误输出，以及 `QT_PLUGIN_PATH`、`QT_QPA_PLATFORM_PLUGIN_PATH`、`QT_QPA_PLATFORM` 的当前值。
-- 当前安装检查尚不能证明 Qt 图形界面可正常启动；Ultralytics 导入及 CPU 模型自检通过，也不代表此问题已解决。
+2026-11-05 收到另一台电脑的反馈：Conda 环境包含 `lib/qt6/plugins`，而 pip 安装的 OpenCV 4.7.0.72 使用 Qt5；预览在 `cv2.namedWindow` 卡住，同时出现 `[Camera] 10 consecutive frame failures: wait_for_frames timeout`。
+Qt 插件必须匹配运行库的主版本，不能混用 Qt5/Qt6，参见 [Qt 插件部署说明](https://doc.qt.io/qt-6.8/deployment-plugins.html)。仅凭上述相机日志不能证明 Qt 死锁的具体调用链。
+
+交付包的相机预览、手眼采集、直接视觉抓取和视觉跟随入口，现会在创建 OpenCV 窗口前，依据当前 `cv2.__file__` 将本进程的 `QT_PLUGIN_PATH` 和 `QT_QPA_PLATFORM_PLUGIN_PATH` 指向 `cv2/qt/plugins`，覆盖继承的 Conda 插件路径；不修改全局环境或删除 Conda Qt。此处理仅针对带有该插件目录的 Linux OpenCV wheel。
+
+相机超时是独立问题：Qt 路径修正不会恢复相机出帧。预热阶段现检查是否收到完整 RGB-D 帧；全部失败时报告底层原因并退出，不再继续弹窗。直接视觉抓取会在连接及使能机械臂前完成这项检查。
+出现超时先用以下相机预览入口排查，退出其他相机客户端，检查 USB 连接/带宽、udev 权限与实际支持的分辨率/帧率。该入口不连接机械臂。
+
+```bash
+bash tools/env.sh vision python src/zekeep_grasp/scripts/camera_preview.py
+```
+
+本地独立环境对照测试：OpenCV 4.7.0（Qt 5.15.0）在插件变量被指向 Conda Qt6 后无法加载平台插件并中止；应用上述路径修正后，真实窗口创建、显示与关闭通过。无帧测试确认预热失败会退出并释放相机，不进入 `namedWindow`。该测试未连接相机或机械臂，也未复现目标电脑的死锁调用链。
+
+目标电脑仍需验证弹窗和实际相机出帧；模型导入及 CPU 推理通过不能代替这两项验证。若仍卡住，保留触发命令、完整错误输出，并临时添加 `QT_DEBUG_PLUGINS=1` 收集实际插件加载路径；不要将调试变量写入全局环境。
 
 ## 新设备初始化
 
