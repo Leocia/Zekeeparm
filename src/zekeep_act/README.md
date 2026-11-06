@@ -70,7 +70,8 @@ Orbbec Viewer 预设只作用于腕部相机。
 
 ## 步骤与命令
 
-先完成[基础安装](../../docs/INSTALL_PORTABLE.md)，再在工作区根目录安装数采与共用模型依赖。
+按[分模块安装](../../docs/INSTALL_PORTABLE.md)准备所需环境。离线训练只需 `models`；
+实际采集与真机执行另需 `ros`、`vision`、`collect`，在工作区根目录按需安装。
 使用 ACT、π0.5 共用的 `act` 环境；其他解释器优先用 `LEROBOT_PYTHON`，兼容 `ACT_PYTHON`。
 
 ```bash

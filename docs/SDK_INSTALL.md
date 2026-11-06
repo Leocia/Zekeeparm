@@ -30,7 +30,7 @@ MotorBridge、NumPy、Pinocchio 等依赖分别装在 ROS 和视觉环境中；�
 
 ### MotorBridge 分环境安装
 
-SDK 的 ROS 与视觉环境均使用 **`motorbridge==0.5.1`**。基础 `setup.sh` 已包含此依赖；分步安装或补装时，在环境创建完成后分别执行：
+SDK 的 ROS 与视觉环境均使用 **`motorbridge==0.5.1`**。`bash setup.sh ros` 与 `bash setup.sh vision` 分别包含各自环境的此依赖；分步安装或补装时，在环境创建完成后分别执行：
 
 ```bash
 # ROS SDK 环境
@@ -63,7 +63,7 @@ python -m pip install --no-deps -e zekeeparm_SDK
 source tools/activate_ros.sh
 ```
 
-环境已由本包创建时，基础安装器会使用同一清单更新；无需重复执行 `env create`。
+环境已由本包创建时，`ros` 模块安装器会使用同一清单更新；无需重复执行 `env create`。
 后续 ROS 构建和运行都使用 `source tools/activate_ros.sh` 或 `bash tools/env.sh ros ...`。
 
 ### 视觉抓取环境
@@ -82,13 +82,13 @@ ROS SDK 和视觉 SDK 都固定 NumPy 1.26.4。视觉环境由 `src/zekeep_grasp
 
 旧包的 `.venv-ros` 由 Python venv 创建，安装清单包含 NumPy 2.2.6 和 PyPI Pinocchio。
 不要在该环境中只执行 `pip install numpy==1.26.4`；这样会留下原生库或依赖约束不一致的组合。
-关闭使用该环境的进程，在项目根目录将旧环境改名备份，再运行新版基础安装：
+关闭使用该环境的进程，在项目根目录将旧环境改名备份，再运行新版 ROS 模块安装：
 
 ```bash
 ros_env_dir="${ZKEEP_ROS_VENV:-$PWD/.venv-ros}"
 # 仅在确认这是需要迁移的旧 venv 时执行；自定义目录同样使用上面的变量。
 mv -- "$ros_env_dir" "${ros_env_dir}.backup-$(date +%Y%m%d-%H%M%S)"
-bash tools/env.sh base bash setup.sh
+bash tools/env.sh base bash setup.sh ros
 ```
 
 安装器会检查目录类型，遇到旧 venv 时直接停止，不删除或覆盖旧环境。

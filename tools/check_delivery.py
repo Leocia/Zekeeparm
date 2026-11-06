@@ -15,6 +15,17 @@ WEIGHTS = {'.pt', '.pth', '.safetensors', '.onnx', '.engine', '.ckpt'}
 
 def check(root=ROOT):
     root = Path(root)
+    # Help and invalid selections must exit before installing anything.
+    for script, modules in [('setup.sh', ('ros', 'vision', 'teleop')),
+                            ('tools/install_optional.sh', ('collect', 'models', 'sim', 'web-sim'))]:
+        for args in ([], ['--help']):
+            result = subprocess.run(['bash', str(root / script), *args],
+                                    check=True, capture_output=True, text=True, timeout=10)
+            assert all(module in result.stdout for module in modules), script
+        for args in (['__invalid_module__'], [modules[0], modules[1]]):
+            result = subprocess.run(['bash', str(root / script), *args],
+                                    capture_output=True, text=True, timeout=10)
+            assert result.returncode == 2 and result.stderr, (script, args)
     counts = dict(files=0, python=0, shell=0, json=0, xml=0)
     for path in sorted(root.rglob('*')):
         relative = path.relative_to(root)

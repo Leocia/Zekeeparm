@@ -1,6 +1,6 @@
 # NVIDIA 驱动与 CUDA：单独手动安装
 
-适用平台：Ubuntu 22.04 x86_64。先准备 GPU 环境，再运行项目的 `setup.sh`。
+适用平台：Ubuntu 22.04 x86_64。按需准备 GPU 环境，再安装 `vision`、`models` 或 GraspNet。纯 ROS、遥操作和独立网页仿真不要求 GPU/Toolkit。
 驱动与 CUDA Toolkit 均由使用者在项目安装器外下载、安装和维护；`setup.sh` 不安装或升级这两项。
 Miniforge 也在脚本外手动安装，见 [README](../README.md#首次安装)。
 
@@ -11,7 +11,7 @@ Miniforge 也在脚本外手动安装，见 [README](../README.md#首次安装)�
 | NVIDIA 驱动 | 建议部署基线为 Linux 570.124.06 或更新的、支持实际 GPU 的驱动 | 重启后 `nvidia-smi` 能列出 GPU |
 | CUDA Toolkit | 12.8.1（CUDA 12.8 Update 1） | 默认 `/usr/local/cuda-12.8`；`nvcc --version` 显示 `release 12.8` |
 | CUDA 扩展编译器 | GCC/G++ 11 | `gcc-11 --version`、`g++-11 --version` |
-| 视觉 `rebotarm` | PyTorch 2.7.1+cu128、torchvision 0.22.1+cu128、torchaudio 2.7.1+cu128；Python 3.10 | 基础安装器负责 Python wheel |
+| 视觉 `rebotarm` | PyTorch 2.7.1+cu128、torchvision 0.22.1+cu128、torchaudio 2.7.1+cu128；Python 3.10 | `vision` 模块负责 Python wheel |
 | 模型 `act`（选装） | PyTorch 2.7.1/cu128、torchvision 0.22.1；Python 3.10 | `models` 选装入口负责 Python wheel |
 | 数采 `embodied`（选装） | PyTorch 2.6.0、torchvision 0.21.0；Python 3.10 | 保留独立版本约束，不套用视觉环境的版本 |
 
@@ -84,7 +84,7 @@ source tools/environment.sh
 "$CUDA_HOME/bin/nvcc" --version
 gcc-11 --version
 g++-11 --version
-bash tools/env.sh base bash setup.sh
+bash tools/env.sh base bash setup.sh vision
 ```
 
 不要把系统 CUDA 的 `lib64` 全局置于所有 Python 环境的 `LD_LIBRARY_PATH` 前面；项目保留各环境自己的原生库隔离。
@@ -103,5 +103,5 @@ bash tools/env.sh vision python -c 'import torch; print("PyTorch:", torch.__vers
 
 仅运行 PyTorch 预编译推理时，wheel 提供所需 CUDA 用户态依赖，仍需可用驱动；
 GraspNet 本地扩展编译还需要本机 Toolkit 12.8、GCC/G++ 11 和可见 GPU。
-GraspNet 不在基础安装器中安装；准备好 Toolkit 和 GPU 后，按 [GraspNet 独立安装步骤](../third_party/README.md)下载源码、安装 API 并编译扩展。
+GraspNet 不在 `vision` 安装器中安装；准备好 Toolkit 和 GPU 后，按 [GraspNet 独立安装步骤](../third_party/README.md)下载源码、安装 API 并编译扩展。
 不同 GPU 架构应在目标机重新编译，不复制旧电脑的扩展 `.so`。

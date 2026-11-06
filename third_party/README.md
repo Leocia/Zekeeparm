@@ -1,7 +1,7 @@
 # 第三方源码目录
 
 本目录通过此说明文件随源码包和 GitHub 仓库保留。目录名为 `third_party`。
-GraspNet 源码、API、CUDA 扩展和权重全部独立准备，基础 `setup.sh` 不执行这些步骤，也不验证 GraspNet 后端。
+GraspNet 源码、API、CUDA 扩展和权重全部独立准备，`setup.sh ros|vision|teleop` 均不执行这些步骤，也不验证 GraspNet 后端。
 须阅读 [第三方说明](../docs/THIRD_PARTY_NOTICES.md)及其链接的上游许可后按需获取。
 
 ## 独立下载源码和权重
@@ -32,9 +32,9 @@ third_party/
 
 下载的依赖不纳入本仓库提交，也不属于原始交付清单。
 
-## 基础安装后独立安装 GraspNet
+## 视觉模块安装后独立安装 GraspNet
 
-先完成基础视觉环境，以及 [驱动和 CUDA 单独安装](../docs/GPU_SETUP.md)。获取源码后，先安装 Cython，供 GraspNet API 的 `grasp_nms` 在关闭构建隔离时使用，再安装 API 和扩展：
+先运行 `bash setup.sh vision` 完成视觉环境，以及 [驱动和 CUDA 单独安装](../docs/GPU_SETUP.md)。获取源码后，先安装 Cython，供 GraspNet API 的 `grasp_nms` 在关闭构建隔离时使用，再安装 API 和扩展：
 
 ```bash
 bash tools/env.sh vision python -m pip install -c tools/constraints-vision.txt Cython==3.0.12

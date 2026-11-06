@@ -7,11 +7,16 @@ case "$module" in
   help|-h|--help)
     printf '%s\n' '用法：bash tools/install_optional.sh collect|models|sim|web-sim' \
       '按需安装依赖；不会下载模型权重、连接设备或执行 sudo。' \
-      '先完成基础 setup.sh；web-sim 另需当前终端可用的 Node.js 22+。'
+      'collect：数采环境（主从插件一并安装）；实际采集另需 ros 和 vision。' \
+      'models：ACT/π0.5 共用模型环境；离线训练不要求 ros、vision 或 teleop。' \
+      'sim：先运行 bash setup.sh ros，再安装 ROS MuJoCo。' \
+      'web-sim：独立网页仿真；只需系统 Python venv 和 Node.js 22+/npm，不要求 ROS/Conda。' \
+      '完整步骤与系统依赖：docs/INSTALL_PORTABLE.md；apps/ 独立交付，不随 GitHub 发布。'
     exit 0 ;;
   collect|models|sim|web-sim|studio) ;;
   *) printf '未知选装模块：%s\n' "$module" >&2; exit 2 ;;
 esac
+[[ $# -eq 1 ]] || { printf '每次只接受一个选装模块。\n' >&2; exit 2; }
 cd -- "$workspace_dir"
 if [[ "$module" == studio && ! -f apps/studio/environment.yml ]]; then
   printf 'Studio 未随 GitHub 仓库发布；请先另行准备 apps/studio 源码。\n' >&2
@@ -39,8 +44,10 @@ case "$module" in
     create_conda "$prefix"
     "$conda" run -p "$prefix" python -m pip install --upgrade pip
     "$conda" run -p "$prefix" python -m pip install \
-      -r src/zekeep_embodied/requirements-embodied.txt -e src/zekeep_embodied
+      -r src/zekeep_embodied/requirements-embodied.txt -e src/zekeep_teleop -e src/zekeep_embodied
     "$conda" run -p "$prefix" python -m pip check
+    "$conda" run -p "$prefix" python -c \
+      'from lerobot_teleoperator_zhongling import ZhonglingLeader, ZhonglingLeaderConfig; import zekeep_embodied.capture; print("数采与主臂插件导入：OK")'
     ;;
   models)
     prefix="$forge/envs/act"
@@ -56,7 +63,7 @@ case "$module" in
     ;;
   sim)
     ros_venv="${ZKEEP_ROS_VENV:-$workspace_dir/.venv-ros}"
-    [[ -x "$ros_venv/bin/python" ]] || { printf '先运行 setup.sh 创建 ROS 环境：%s\n' "$ros_venv" >&2; exit 1; }
+    [[ -x "$ros_venv/bin/python" ]] || { printf '先运行 bash setup.sh ros 创建 ROS 环境：%s\n' "$ros_venv" >&2; exit 1; }
     set +u
     source tools/activate_ros.sh
     set -u

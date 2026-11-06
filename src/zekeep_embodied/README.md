@@ -5,21 +5,23 @@
 
 ## 首次安装
 
-先按[安装说明](../../docs/INSTALL_PORTABLE.md)准备独立的 `rebotarm` 相机环境，不要把 Orbbec SDK 装进 `embodied`。
-在工作区根目录执行：
+按[分模块安装说明](../../docs/INSTALL_PORTABLE.md)准备 Conda 和系统前置包，再在工作区根目录执行：
 
 ```bash
-conda create -n embodied python=3.10 -y
-conda activate embodied
-export EMBODIED_PYTHON="$CONDA_PREFIX/bin/python"
-bash src/zekeep_embodied/tools/run.sh -m pip install \
-  -r src/zekeep_embodied/requirements-embodied.txt -e src/zekeep_teleop -e src/zekeep_embodied
-bash src/zekeep_embodied/tools/run.sh -m pip check
+bash setup.sh ros
+bash setup.sh vision
+bash tools/install_optional.sh collect
 ```
 
-默认解释器为 `~/miniforge3/envs/embodied/bin/python`；其他位置需设置 `EMBODIED_PYTHON`。
-检查 [record.yaml](configs/record.yaml) 中的任务、相机设备和相机 Python 路径。
-相机位置或设备变化后，更新 `installation_id`，重新检查画面；不同布局数据不要直接混用。
+实际双相机采集使用以上三个模块；只做离线数据检查/打包时，可仅安装 `collect`。
+`collect` 在独立 Python 3.10 的 `embodied` 环境安装数采依赖、本地主臂插件 `src/zekeep_teleop` 和数采包。
+相机仍由 `rebotarm` 进程读取，不把 Orbbec SDK 装入 `embodied`；ROS 采集端使用 ROS 环境。
+无需为主臂经 ROS 示教另建整个 `lerobot` 环境，也不要安装 reBotArm SDK 到数采环境。
+
+安装后填写 `configs/record.yaml` 的任务、双相机路径、设备和非空 `installation_id`，
+现场核验采集区域后设置 `workspace.confirmed: true`。相机或布局改变后更新安装标识并重新检查画面。
+不同布局的数据不直接混用。先运行 `./tools/collect.sh doctor` 做无设备检查；
+`camera-check` 会打开相机，须在现场单独执行。
 
 ## ACT、π0.5 共用采集入口
 
